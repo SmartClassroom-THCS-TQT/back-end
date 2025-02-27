@@ -1,3 +1,8 @@
-from django.shortcuts import render
+# views.py
+from rest_framework import viewsets
+from .models import *
+from .serializers import SemesterSerializer
 
-# Create your views here.
+class SemesterViewSet(viewsets.ModelViewSet):
+    queryset = Semester.objects.all()
+    serializer_class = SemesterSerializer

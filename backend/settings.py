@@ -27,11 +27,13 @@ environ.Env.read_env('.env.dev')
 # Cấu hình các giá trị từ .env.dev
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
+#--------------------------------------
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+#SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-jws0d7!db@mj42q-*n7cqn@^+guao$@rgf3o_@@al5ailinfdr'
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -90,7 +92,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 
-# Database
+# Database - db.sqlite3
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 # DATABASES = {
@@ -101,6 +103,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # }
 
 
+#database - postgres
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -111,6 +114,8 @@ DATABASES = {
         'PORT': env('DB_PORT'),
     }
 }
+
+
 
 
 # Password validation

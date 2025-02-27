@@ -1,0 +1,6 @@
+name: django-ecommerce
+
+ postgresql:
+    image: 'bitnami/postgresql:latest'
+    networks:
+      - app-tier
