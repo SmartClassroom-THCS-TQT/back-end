@@ -1,52 +1,45 @@
 from django.contrib import admin
 from .models import Room, Semester, Subject, Lesson, ClassTime, ClassSession
-from accounts.models import Teacher  # Import model Teacher từ ứng dụng accounts
 
-# Custom Admin for Room
+# RoomAdmin để quản lý model Room
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'get_capacity')  # Hiển thị các trường này trong bảng quản lý
-    search_fields = ('code', 'name')  # Cho phép tìm kiếm theo mã phòng và tên
-    list_filter = ('name',)  # Thêm bộ lọc theo tên phòng học
+    list_display = ('code', 'name', 'get_students_count')
+    search_fields = ('code', 'name')
 
-    def get_capacity(self, obj):
-        return obj.get_capacity()
-    get_capacity.admin_order_field = 'capacity'  # Để có thể sắp xếp theo capacity
-    get_capacity.short_description = 'Số lượng học sinh'  # Tiêu đề cho cột capacity
+    def get_students_count(self, obj):
+        return obj.get_students().count()
+    get_students_count.short_description = 'Number of Students'
 
-# Custom Admin for Semester
+# SemesterAdmin để quản lý model Semester
 class SemesterAdmin(admin.ModelAdmin):
-    list_display = ('name', 'start_date', 'end_date', 'weeks_count')  # Hiển thị các trường
-    search_fields = ('name',)  # Tìm kiếm theo tên học kỳ
-    list_filter = ('start_date',)  # Thêm bộ lọc theo ngày bắt đầu
+    list_display = ('name', 'start_date', 'end_date', 'weeks_count')
+    search_fields = ('name',)
+    list_filter = ('start_date',)
 
-# Custom Admin for Subject
+# SubjectAdmin để quản lý model Subject
 class SubjectAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name')  # Hiển thị các trường
-    search_fields = ('name', 'code')  # Tìm kiếm theo mã môn học và tên
+    list_display = ('code', 'name')
+    search_fields = ('code', 'name')
 
-# Custom Admin for Lesson
+# LessonAdmin để quản lý model Lesson
 class LessonAdmin(admin.ModelAdmin):
-    list_display = ('lesson_name', 'subject', 'session_count')  # Hiển thị các trường
-    search_fields = ('lesson_name', 'subject__name')  # Tìm kiếm theo tên bài học và tên môn học
-    list_filter = ('subject',)  # Thêm bộ lọc theo môn học
+    list_display = ('lesson_name', 'subject', 'session_count')
+    search_fields = ('lesson_name', 'subject__name')
+    list_filter = ('subject',)
 
-# Custom Admin for ClassTime
+# ClassTimeAdmin để quản lý model ClassTime
 class ClassTimeAdmin(admin.ModelAdmin):
-    list_display = ('number', 'start_time', 'end_time')  # Hiển thị các trường
-    search_fields = ('number', 'start_time', 'end_time')  # Tìm kiếm theo thời gian bắt đầu và kết thúc
-    list_filter = ('start_time', 'end_time')  # Bộ lọc theo thời gian
+    list_display = ('name_time', 'start_time', 'end_time')
+    search_fields = ('name_time',)
 
-# Custom Admin for ClassSession
+# ClassSessionAdmin để quản lý model ClassSession
 class ClassSessionAdmin(admin.ModelAdmin):
-    list_display = ('class_group', 'day_of_week', 'number', 'lesson', 'teachers', 'grade', 'absences')  # Hiển thị các trường
-    search_fields = ('class_group', 'lesson__name', 'teachers__name')  # Tìm kiếm theo tên lớp, môn học và giảng viên
-    list_filter = ('day_of_week', 'semester', 'lesson')  # Bộ lọc theo ngày trong tuần, học kỳ và môn học
+    list_display = ('semester', 'class_room', 'day_of_week', 'name_time', 'lesson', 'teachers', 'grade', 'absences')
+    search_fields = ('lesson__lesson_name', 'class_room__name', 'teachers__user__full_name')
+    list_filter = ('semester', 'class_room', 'day_of_week', 'name_time', 'grade')
+    raw_id_fields = ('teachers',)  # Sử dụng raw_id_fields để tối ưu hiệu suất khi có nhiều giáo viên
 
-    def teachers(self, obj):
-        return ", ".join([teacher.name for teacher in obj.teachers.all()])  # Hiển thị tên giảng viên
-    teachers.short_description = 'Giảng viên'  # Tiêu đề cho cột giảng viên
-
-# Registering models with custom admin views
+# Đăng ký các model với Django Admin
 admin.site.register(Room, RoomAdmin)
 admin.site.register(Semester, SemesterAdmin)
 admin.site.register(Subject, SubjectAdmin)

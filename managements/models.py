@@ -46,14 +46,14 @@ class Semester(models.Model):
 
    
 class Subject(models.Model):
-    code = models.BigIntegerField(unique=True)  # Unique subject code
+    code = models.BigIntegerField(primary_key=True)  # Unique subject code
     name = models.CharField(max_length=255)  # Name of the subject
     
     def __str__(self):
         return self.name
 
 class Lesson(models.Model):
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='lessons')  # Subject of the lesson
     lesson_name = models.CharField(max_length=255)
     session_count = models.PositiveIntegerField()  # Number of sessions based on the program
 
@@ -61,22 +61,30 @@ class Lesson(models.Model):
         return self.lesson_name
 
 class ClassTime(models.Model):
-    number = models.PositiveIntegerField(unique=True)  # Time slot number
+    name_time = models.PositiveIntegerField(unique=True)  # Time slot number
     start_time = models.TimeField()  # Start time of the session
     end_time = models.TimeField()  # End time of the session
 
     def __str__(self):
         return f"Session {self.number} from {self.start_time} to {self.end_time}"
+    
 
+
+GRADE_CHOICES = [
+    ('A', 'A'),
+    ('B', 'B'),
+    ('C', 'C'),
+    ('D', 'D'),
+]
 class ClassSession(models.Model):
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
-    class_group = models.CharField(max_length=50)  # Class group (e.g. Class A, B, C)
+    class_room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='class_sessions')  # Room where the lesson is taught
     day_of_week = models.PositiveIntegerField()  # Day of the week (1 for Monday, 7 for Sunday)
-    number = models.ForeignKey(ClassTime, on_delete=models.CASCADE)  # Session time
+    name_time = models.ForeignKey(ClassTime, on_delete=models.CASCADE)  # Session time
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)  # The lesson being taught
     teachers = models.ForeignKey('accounts.Teacher', on_delete=models.CASCADE,related_name='class_sessions')  # Teacher teaching the lesson
     comment = models.TextField(blank=True)  # Optional comment
-    grade = models.FloatField()  # Grade/score
+    grade = models.CharField(max_length=1,choices=GRADE_CHOICES, blank=True)  # Grade of the class session
     absences = models.PositiveIntegerField()  # Number of absences
 
     def __str__(self):
