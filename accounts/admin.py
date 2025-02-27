@@ -2,66 +2,96 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import CustomUser, Teacher, Admin, Student
 
-
+# CustomUserAdmin để quản lý CustomUser trong Django Admin
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser
+from .models import CustomUser, Teacher, Admin, Student
 
 class CustomUserAdmin(UserAdmin):
-    model = CustomUser
+    # Các trường hiển thị trong danh sách người dùng
+    list_display = ('user_id', 'email', 'phone_number', 'role', 'full_name', 'is_active', 'is_staff', 'is_superuser', 'date_joined', 'last_login')
     
-    # list_display: xác định các trường sẽ được hiển thị trong danh sách người dùng trên giao diện admin
-    list_display = ['user_id', 'email', 'role', 'is_active', 'is_staff', 'is_superuser']  # Hiển thị các thông tin quan trọng trong danh sách
-
-    # list_filter: cho phép lọc danh sách người dùng theo các trường này
-    list_filter = ['role', 'is_active', 'is_staff', 'is_superuser']  # Có thể lọc người dùng theo role và các quyền
-
-    # search_fields: cho phép tìm kiếm người dùng dựa trên các trường này
-    search_fields = ['email', 'user_id']  # Tìm kiếm bằng email hoặc user_id
-
-    # readonly_fields: xác định các trường mà không thể chỉnh sửa từ giao diện admin
-    readonly_fields = ['date_joined', 'last_login']  # Không cho phép sửa đổi ngày tham gia và lần đăng nhập cuối
-
-    # fieldsets: xác định cách nhóm các trường trong form khi chỉnh sửa người dùng
-    # fieldsets = (
-    #     (None, {'fields': ('password')}),  # Nhóm mật khẩu người dùng
-    #     ('Personal info', {'fields': ('email', 'phone_number', 'role')}),  # Thông tin cá nhân, gồm email, số điện thoại và vai trò
-    #     ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}),  # Quyền hạn người dùng
-    # )
+    # Các trường có thể lọc
+    list_filter = ('role', 'is_active', 'is_staff', 'is_superuser', 'date_joined')
     
-    # add_fieldsets: xác định các trường hiển thị khi tạo người dùng mới
+    # Các trường có thể tìm kiếm
+    search_fields = ('user_id', 'email', 'phone_number', 'full_name')
+    
+    # Sắp xếp mặc định
+    ordering = ('user_id',)
+
+    # Các nhóm trường hiển thị trong trang chi tiết người dùng
+    fieldsets = (
+        (None, {'fields': ('email', 'phone_number', 'password')}),
+        ('Personal Info', {'fields': ('full_name', 'sex', 'day_of_birth', 'nation', 'active_status')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'role')}),
+        # Loại bỏ 'last_login' và 'date_joined' khỏi fieldsets
+    )
+
+    # Các trường hiển thị khi thêm người dùng mới
     add_fieldsets = (
         (None, {
-            'classes': ('wide',),  # Đảm bảo form tạo mới có chiều rộng đầy đủ
-            'fields': ('password1', 'password2', 'email', 'role', 'is_active', 'is_staff', 'is_superuser')  # Các trường khi tạo người dùng
+            'classes': ('wide',),
+            'fields': ('user_id', 'email', 'phone_number', 'password1', 'password2', 'role', 'full_name', 'is_active', 'is_staff', 'is_superuser'),
         }),
     )
-    
-    # filter_horizontal: dùng để hiển thị danh sách lựa chọn với các trường quan hệ nhiều-nhiều (nếu có), mặc dù không dùng trong trường hợp này
-    filter_horizontal = ()  # Không sử dụng trường hợp này, vì không có quan hệ nhiều-nhiều
-    ordering=['user_id'] # Sắp xếp người dùng theo user_id
 
 
-
-# Teacher Admin
+# TeacherAdmin để quản lý Teacher trong Django Admin
 class TeacherAdmin(admin.ModelAdmin):
-    list_display = ['full_name', 'user_id', 'sex', 'day_of_birth', 'nation', 'active_status', 'contract_types', 'expertise_levels']
-    search_fields = ['full_name', 'user__user_id']
-    list_filter = ['active_status', 'contract_types', 'expertise_levels']
+    # Các trường hiển thị trong danh sách giáo viên
+    list_display = ('get_teacher_id', 'full_name', 'contract_types', 'expertise_levels')
+    
+    # Các trường có thể tìm kiếm
+    search_fields = ('user__user_id', 'user__full_name')
+    
+    # Phương thức để lấy teacher_id
+    def get_teacher_id(self, obj):
+        return obj.user.user_id
+    get_teacher_id.short_description = 'Teacher ID'
+    
+    # Phương thức để lấy full_name từ CustomUser
+    def full_name(self, obj):
+        return obj.user.full_name
+    full_name.short_description = 'Full Name'
 
-# Admin Admin
+# AdminAdmin để quản lý Admin trong Django Admin
 class AdminAdmin(admin.ModelAdmin):
-    list_display = ['full_name', 'user_id', 'sex', 'day_of_birth', 'nation', 'active_status', 'contract_types', 'expertise_levels', 'description']
-    search_fields = ['full_name', 'user__user_id']
-    list_filter = ['active_status', 'contract_types', 'expertise_levels']
+    # Các trường hiển thị trong danh sách admin
+    list_display = ('get_admin_id', 'full_name', 'contract_types', 'expertise_levels', 'description')
+    
+    # Các trường có thể tìm kiếm
+    search_fields = ('user__user_id', 'user__full_name')
+    
+    # Phương thức để lấy admin_id
+    def get_admin_id(self, obj):
+        return obj.user.user_id
+    get_admin_id.short_description = 'Admin ID'
+    
+    # Phương thức để lấy full_name từ CustomUser
+    def full_name(self, obj):
+        return obj.user.full_name
+    full_name.short_description = 'Full Name'
 
-# Student Admin
+# StudentAdmin để quản lý Student trong Django Admin
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ['full_name', 'user_id', 'sex', 'day_of_birth', 'nation', 'active_status']
-    search_fields = ['full_name', 'user__user_id']
-    list_filter = ['active_status']
+    # Các trường hiển thị trong danh sách học sinh
+    list_display = ('get_student_id', 'full_name', 'classroom')
+    
+    # Các trường có thể tìm kiếm
+    search_fields = ('user__user_id', 'user__full_name')
+    
+    # Phương thức để lấy student_id
+    def get_student_id(self, obj):
+        return obj.user.user_id
+    get_student_id.short_description = 'Student ID'
+    
+    # Phương thức để lấy full_name từ CustomUser
+    def full_name(self, obj):
+        return obj.user.full_name
+    full_name.short_description = 'Full Name'
 
-# Register the models with the admin site
+# Đăng ký các model với Django Admin
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Teacher, TeacherAdmin)
 admin.site.register(Admin, AdminAdmin)

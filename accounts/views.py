@@ -77,6 +77,12 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             password=user_data['user_id'], 
             email=user_data.get('email'),
             phone_number=user_data.get('phone_number'),
+            sex=user_data.get('sex'),
+            full_name=user_data.get('full_name'),
+            day_of_birth=user_data.get('day_of_birth'),
+            nation=user_data.get('nation'),
+            active_status=user_data.get('active_status'),
+            is_active=True,
             is_staff=(role == 'admin'),
             is_superuser=(role == 'admin'),
             date_joined=timezone.now()
@@ -288,7 +294,7 @@ class ChangePasswordView(APIView):
 
         return Response({"message": "Mật khẩu đã được cập nhật thành công."}, status=status.HTTP_200_OK)
 
-# API 2: Admin reset mật khẩu của người khác
+
 class ResetPasswordByAdminView(APIView):
     permission_classes = [IsAuthenticated]
 

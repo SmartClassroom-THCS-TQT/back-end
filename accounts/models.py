@@ -43,7 +43,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     user_id = models.CharField(primary_key=True, max_length=8, editable=False)
     email = models.EmailField(max_length=255, unique=True, null=True, blank=True)
     phone_number = models.CharField(max_length=32, unique=True, null=True, blank=True)
-    role = models.CharField(max_length=32, choices=USER_ROLE_CHOICES, default='student')
+    role = models.CharField(max_length=32, choices=USER_ROLE_CHOICES)
+
+    full_name = models.CharField(max_length=255)
+    sex = models.CharField(max_length=32, null=True, blank=True)
+    day_of_birth = models.DateField(null=True, blank=True)
+    nation = models.CharField(max_length=32, null=True, blank=True)
+    active_status = models.CharField(max_length=355, null=True, blank=True)
     
     # User permissions
     is_active = models.BooleanField(default=True)
@@ -62,18 +68,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 class Teacher(models.Model):
     user = models.OneToOneField(CustomUser,primary_key=True, on_delete=models.CASCADE, related_name='teacher')
-    full_name = models.CharField(max_length=255)
-    sex = models.CharField(max_length=32, null=True, blank=True)
-    day_of_birth = models.DateField(null=True, blank=True)
-    nation = models.CharField(max_length=32, null=True, blank=True)
-    active_status = models.CharField(max_length=355, null=True, blank=True)
     contract_types= models.CharField(max_length=255, null=True, blank=True)
     expertise_levels = models.CharField(max_length=255, null=True, blank=True)
     subjects = models.TextField(null=True, blank=True)
     def get_teacher_id(self):
         return self.user.user_id
     def __str__(self):
-        return f"{self.full_name} - {self.user.user_id}"
+        return f"{self.user.full_name} - {self.user.user_id}"
     class Meta:
         db_table = 'Teacher'
         verbose_name = 'Teacher'
@@ -81,18 +82,13 @@ class Teacher(models.Model):
 
 class Admin(models.Model):
     user = models.OneToOneField(CustomUser,primary_key=True, on_delete=models.CASCADE,related_name='admin')
-    full_name = models.CharField(max_length=255)
-    sex = models.CharField(max_length=32, null=True, blank=True)
-    day_of_birth = models.DateField(null=True, blank=True)
-    nation = models.CharField(max_length=32, null=True, blank=True)
-    active_status = models.CharField(max_length=355, null=True, blank=True)
     contract_types= models.CharField(max_length=255, null=True, blank=True)
     expertise_levels = models.CharField(max_length=255, null=True, blank=True)
     description = models.CharField(max_length=32, null=True, blank=True)
     def get_admin_id(self):
         return self.user.user_id
     def __str__(self):
-        return f"{self.full_name} - {self.user.user_id}"
+        return f"{self.user.full_name} - {self.user.user_id}"
     class Meta:
         db_table = 'Admin'
         verbose_name = 'Admin'
@@ -101,16 +97,11 @@ class Admin(models.Model):
   
 class Student(models.Model):
     user = models.OneToOneField(CustomUser,primary_key=True, on_delete=models.CASCADE,related_name='student')
-    full_name = models.CharField(max_length=255)
-    sex = models.CharField(max_length=32, null=True, blank=True)
-    day_of_birth = models.DateField(null=True, blank=True)
-    nation = models.CharField(max_length=32, null=True, blank=True)
-    active_status = models.CharField(max_length=355, null=True, blank=True)
     classroom = models.ForeignKey('managements.Room', on_delete=models.CASCADE, null=True, blank=True, related_name='students')
     def get_student_id(self):
         return self.user.user_id
     def __str__(self):
-        return f"{self.full_name} - {self.user.user_id}"
+        return f"{self.user.full_name} - {self.user.user_id}"
     class Meta:
         db_table = 'Student'
         verbose_name = 'Student'
