@@ -24,7 +24,7 @@ class LessonSerializer(serializers.ModelSerializer):
 
 class ClassTimeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ClassTime
+        model = Time_slot
         fields = '__all__'
 
 class ClassSessionSerializer(serializers.ModelSerializer):

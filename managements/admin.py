@@ -1,14 +1,17 @@
 from django.contrib import admin
-from .models import Room, Semester, Subject, Lesson, ClassTime, ClassSession
+from .models import *
 
 # RoomAdmin để quản lý model Room
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'get_students_count')
+    list_display = ('code', 'name', 'manager', 'get_capacity')
     search_fields = ('code', 'name')
-
-    def get_students_count(self, obj):
-        return obj.get_students().count()
-    get_students_count.short_description = 'Number of Students'
+    list_filter = ('manager',)
+    ordering = ('code',)
+    
+    def get_capacity(self, obj):
+        # Assuming that the method `get_capacity` returns the count of students in the room
+        return obj.get_capacity()
+    get_capacity.short_description = ('Capacity')
 
 # SemesterAdmin để quản lý model Semester
 class SemesterAdmin(admin.ModelAdmin):
@@ -28,21 +31,37 @@ class LessonAdmin(admin.ModelAdmin):
     list_filter = ('subject',)
 
 # ClassTimeAdmin để quản lý model ClassTime
-class ClassTimeAdmin(admin.ModelAdmin):
-    list_display = ('name_time', 'start_time', 'end_time')
-    search_fields = ('name_time',)
-
+class TimeSlotAdmin(admin.ModelAdmin):
+    list_display = ('name', 'start_time', 'end_time')
+    search_fields = ('name', 'start_time', 'end_time')
+    list_filter = ('start_time', 'end_time')
+    ordering = ('name',)
 # ClassSessionAdmin để quản lý model ClassSession
 class ClassSessionAdmin(admin.ModelAdmin):
-    list_display = ('semester', 'class_room', 'day_of_week', 'name_time', 'lesson', 'teachers', 'grade', 'absences')
-    search_fields = ('lesson__lesson_name', 'class_room__name', 'teachers__user__full_name')
-    list_filter = ('semester', 'class_room', 'day_of_week', 'name_time', 'grade')
-    raw_id_fields = ('teachers',)  # Sử dụng raw_id_fields để tối ưu hiệu suất khi có nhiều giáo viên
+    list_display = ('semester', 'class_room', 'day', 'time_slot', 'lesson', 'teacher', 'grade', 'absences', 'comment')
+    search_fields = ('semester__name', 'class_room__name', 'lesson__name', 'teachers__name')
+    list_filter = ('semester', 'class_room', 'time_slot', 'teacher', 'grade')
+    ordering = ('semester', 'class_room', 'day', 'time_slot')
+
+    def get_day(self, obj):
+        # Optionally, convert the `day` integer to a human-readable string
+        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        return days[obj.day - 1]
+    get_day.short_description = ('Day of Week')
+
+    def get_teacher(self, obj):
+        return obj.teachers.name
+    get_teacher.short_description = ('Teacher')
+
+    def get_class_group(self, obj):
+        # Assuming you want to display some class group information (adjust as per your model)
+        return f"{obj.class_group}"
+    get_class_group.short_description = ('Class Group')
 
 # Đăng ký các model với Django Admin
 admin.site.register(Room, RoomAdmin)
 admin.site.register(Semester, SemesterAdmin)
 admin.site.register(Subject, SubjectAdmin)
 admin.site.register(Lesson, LessonAdmin)
-admin.site.register(ClassTime, ClassTimeAdmin)
+admin.site.register(Time_slot, TimeSlotAdmin)
 admin.site.register(ClassSession, ClassSessionAdmin)

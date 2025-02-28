@@ -20,7 +20,7 @@ class LessonViewSet(viewsets.ModelViewSet):
     serializer_class = LessonSerializer
 
 class ClassTimeViewSet(viewsets.ModelViewSet):
-    queryset = ClassTime.objects.all()
+    queryset = Time_slot.objects.all()
     serializer_class = ClassTimeSerializer
 
 class ClassSessionViewSet(viewsets.ModelViewSet):

@@ -8,10 +8,11 @@ from accounts.models import Student, Teacher, Admin
 class Room (models.Model):
     code = models.CharField(max_length=10, primary_key=True)
     name = models.CharField(max_length=255)
+    manager = models.ForeignKey('accounts.Teacher', on_delete=models.CASCADE, related_name='rooms', null=True, blank=True)
     def get_students(self):
         return Student.objects.filter(classroom=self)
     def get_capacity(self):
-        return self.Student.count()  # Trả về số học sinh trong phòng học
+        return self.students.count()  # Trả về số học sinh trong phòng học
 # Bảng học kỳ   
 class Semester(models.Model):
     name = models.IntegerField(primary_key=True)
@@ -44,14 +45,14 @@ class Semester(models.Model):
         day_end = self.get_day_end()
         return f"{self.name}"
 
-   
+# bảng môn học
 class Subject(models.Model):
     code = models.BigIntegerField(primary_key=True)  # Unique subject code
     name = models.CharField(max_length=255)  # Name of the subject
     
     def __str__(self):
         return self.name
-
+# Bảng bài học
 class Lesson(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='lessons')  # Subject of the lesson
     lesson_name = models.CharField(max_length=255)
@@ -59,14 +60,14 @@ class Lesson(models.Model):
 
     def __str__(self):
         return self.lesson_name
-
-class ClassTime(models.Model):
-    name_time = models.PositiveIntegerField(unique=True)  # Time slot number
+# bảng chia thời gian trong ngày học
+class Time_slot(models.Model):
+    name = models.PositiveIntegerField(unique=True)  # Time slot number
     start_time = models.TimeField()  # Start time of the session
     end_time = models.TimeField()  # End time of the session
 
     def __str__(self):
-        return f"Session {self.number} from {self.start_time} to {self.end_time}"
+        return f"Session {self.name} from {self.start_time} to {self.end_time}"
     
 
 
@@ -76,17 +77,19 @@ GRADE_CHOICES = [
     ('C', 'C'),
     ('D', 'D'),
 ]
+
+# bảng phiên học
 class ClassSession(models.Model):
-    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
+    semester = models.ForeignKey(Semester, on_delete=models.CASCADE) 
     class_room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='class_sessions')  # Room where the lesson is taught
-    day_of_week = models.PositiveIntegerField()  # Day of the week (1 for Monday, 7 for Sunday)
-    name_time = models.ForeignKey(ClassTime, on_delete=models.CASCADE)  # Session time
+    day = models.DateField()  # Session day
+    time_slot = models.ForeignKey(Time_slot, on_delete=models.CASCADE)  # Session time
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)  # The lesson being taught
-    teachers = models.ForeignKey('accounts.Teacher', on_delete=models.CASCADE,related_name='class_sessions')  # Teacher teaching the lesson
-    comment = models.TextField(blank=True)  # Optional comment
-    grade = models.CharField(max_length=1,choices=GRADE_CHOICES, blank=True)  # Grade of the class session
-    absences = models.PositiveIntegerField()  # Number of absences
+    teacher = models.ForeignKey('accounts.Teacher', on_delete=models.CASCADE,related_name='class_sessions')  # Teacher teaching the lesson
+    comment = models.TextField(blank=True, null=True)  # Optional comment
+    grade = models.CharField(max_length=1,choices=GRADE_CHOICES, blank=True, null=True)  # Grade of the class session
+    absences = models.PositiveIntegerField(null=True, blank=True)  # Number of absences
 
     def __str__(self):
-        return f"{self.class_group} - {self.lesson} - {self.teacher}"
+        return f"{self.class_room} - {self.lesson} - {self.teacher}"
     
