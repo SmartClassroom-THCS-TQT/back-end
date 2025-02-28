@@ -56,8 +56,9 @@ class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
     @action(detail=False, methods=['post'], url_path='register', permission_classes=[AllowAny])
+    @action(detail=False, methods=['post'], url_path='register', permission_classes=[AllowAny])
     def register(self, request):
-    # Validate CustomUserSerializer
+        # Validate CustomUserSerializer
         user_serializer = CustomUserSerializer(data=request.data)
         if not user_serializer.is_valid():
             return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -65,11 +66,22 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         # Lấy dữ liệu đã xác thực từ serializer
         user_data = user_serializer.validated_data
         role = user_data.get('role')
-
         VALID_ROLES = {'student', 'teacher', 'admin'}
         if role not in VALID_ROLES:
             return Response({"error": "Invalid role provided."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Kiểm tra sự tồn tại của user_id, email, phone_number
+        existing_fields = {}
+        if CustomUser.objects.filter(user_id=user_data['user_id']).exists():
+            existing_fields["already_exists_user_id"] = [user_data['user_id']]
+        if user_data.get('email') and CustomUser.objects.filter(email=user_data['email']).exists():
+            existing_fields["already_exists_email"] = [user_data['email']]
+        if user_data.get('phone_number') and CustomUser.objects.filter(phone_number=user_data['phone_number']).exists():
+            existing_fields["already_exists_phone_number"] = [user_data['phone_number']]
+        
+        if existing_fields:
+            return Response(existing_fields, status=status.HTTP_400_BAD_REQUEST)
+        
         # Tạo CustomUser
         user = CustomUser.objects.create_user(
             user_id=user_data['user_id'],
@@ -87,7 +99,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             is_superuser=(role == 'admin'),
             date_joined=timezone.now()
         )
-
+        
         # Chọn serializer phù hợp theo role
         role_serializers = {
             'teacher': TeacherSerializer,
@@ -112,6 +124,8 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
 
     @action(detail=False, methods=['get'], url_path='detail', permission_classes=[IsAuthenticated])
     def my_detail(self, request):
