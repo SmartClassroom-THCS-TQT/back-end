@@ -13,5 +13,5 @@ router.register(r'class_times', ClassTimeViewSet)
 router.register(r'class_sessions', ClassSessionViewSet)
 
 urlpatterns = [
-    path('api/', include(router.urls)),
+    path('', include(router.urls)),
 ]
