@@ -95,8 +95,8 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             nation=user_data.get('nation'),
             active_status=user_data.get('active_status'),
             is_active=True,
-            is_staff=(role == 'admin'),
-            is_superuser=(role == 'admin'),
+            is_staff=(False),
+            is_superuser=(False),
             date_joined=timezone.now()
         )
         

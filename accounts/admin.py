@@ -1,97 +1,50 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
 from .models import CustomUser, Teacher, Admin, Student
 
-# CustomUserAdmin để quản lý CustomUser trong Django Admin
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Teacher, Admin, Student
 
-class CustomUserAdmin(UserAdmin):
-    # Các trường hiển thị trong danh sách người dùng
-    list_display = ('user_id', 'email', 'phone_number', 'role', 'full_name', 'is_active', 'is_staff', 'is_superuser', 'date_joined', 'last_login')
-    
-    # Các trường có thể lọc
-    list_filter = ('role', 'is_active', 'is_staff', 'is_superuser', 'date_joined')
-    
-    # Các trường có thể tìm kiếm
-    search_fields = ('user_id', 'email', 'phone_number', 'full_name')
-    
-    # Sắp xếp mặc định
-    ordering = ('user_id',)
+class CustomUserAdmin(admin.ModelAdmin):
+    list_display = ('user_id', 'full_name', 'email', 'role', 'is_active', 'is_staff', 'is_superuser', 'date_joined', 'last_login')
+    list_filter = ('role', 'is_active', 'is_staff', 'is_superuser')
+    search_fields = ('user_id', 'full_name', 'email')
+    readonly_fields = ('user_id','password', 'date_joined', 'last_login')  # Fields that should be read-only
+    exclude = ('groups','user_permissions')  # Fields that should be excluded from the form
 
-    # Các nhóm trường hiển thị trong trang chi tiết người dùng
-    fieldsets = (
-        (None, {'fields': ('email', 'phone_number', 'password')}),
-        ('Personal Info', {'fields': ('full_name', 'sex', 'day_of_birth', 'nation', 'active_status')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'role')}),
-        # Loại bỏ 'last_login' và 'date_joined' khỏi fieldsets
-    )
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        
+        # Make fields read-only if obj exists (i.e. editing an existing object)
+        if obj:
+            for fieldset in fieldsets:
+                # fieldset[1] contains the fields of the current section
+                for field in fieldset[1]:
+                    # Check if the field is one of the fields that should be readonly
+                    if field == 'user_id' or field == 'date_joined' or field == 'last_login':
+                        # Set this field to be readonly
+                        fieldsets[0][1] = tuple(
+                            f for f in fieldset[1] if f != field
+                        ) + (field,)
+        return fieldsets
 
-    # Các trường hiển thị khi thêm người dùng mới
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('user_id', 'email', 'phone_number', 'password1', 'password2', 'role', 'full_name', 'is_active', 'is_staff', 'is_superuser'),
-        }),
-    )
-
-
-# TeacherAdmin để quản lý Teacher trong Django Admin
 class TeacherAdmin(admin.ModelAdmin):
-    # Các trường hiển thị trong danh sách giáo viên
-    list_display = ('get_teacher_id', 'full_name', 'contract_types', 'expertise_levels')
-    
-    # Các trường có thể tìm kiếm
-    search_fields = ('user__user_id', 'user__full_name')
-    
-    # Phương thức để lấy teacher_id
-    def get_teacher_id(self, obj):
-        return obj.user.user_id
-    get_teacher_id.short_description = 'Teacher ID'
-    
-    # Phương thức để lấy full_name từ CustomUser
-    def full_name(self, obj):
-        return obj.user.full_name
-    full_name.short_description = 'Full Name'
+    list_display = ('get_teacher_id', 'user', 'contract_types', 'expertise_levels', 'subjects')
+    list_filter = ('contract_types', 'expertise_levels')
+    search_fields = ('user__user_id', 'user__full_name', 'contract_types', 'expertise_levels')
+    readonly_fields = ('get_teacher_id', 'user')  # Fields that should be read-only
 
-# AdminAdmin để quản lý Admin trong Django Admin
 class AdminAdmin(admin.ModelAdmin):
-    # Các trường hiển thị trong danh sách admin
-    list_display = ('get_admin_id', 'full_name', 'contract_types', 'expertise_levels', 'description')
-    
-    # Các trường có thể tìm kiếm
-    search_fields = ('user__user_id', 'user__full_name')
-    
-    # Phương thức để lấy admin_id
-    def get_admin_id(self, obj):
-        return obj.user.user_id
-    get_admin_id.short_description = 'Admin ID'
-    
-    # Phương thức để lấy full_name từ CustomUser
-    def full_name(self, obj):
-        return obj.user.full_name
-    full_name.short_description = 'Full Name'
+    list_display = ('get_admin_id', 'user', 'contract_types', 'expertise_levels', 'description')
+    list_filter = ('contract_types', 'expertise_levels')
+    search_fields = ('user__user_id', 'user__full_name', 'contract_types', 'expertise_levels', 'description')
+    readonly_fields = ('get_admin_id', 'user')  # Fields that should be read-only
 
-# StudentAdmin để quản lý Student trong Django Admin
 class StudentAdmin(admin.ModelAdmin):
-    # Các trường hiển thị trong danh sách học sinh
-    list_display = ('get_student_id', 'full_name', 'classroom')
-    
-    # Các trường có thể tìm kiếm
-    search_fields = ('user__user_id', 'user__full_name')
-    
-    # Phương thức để lấy student_id
-    def get_student_id(self, obj):
-        return obj.user.user_id
-    get_student_id.short_description = 'Student ID'
-    
-    # Phương thức để lấy full_name từ CustomUser
-    def full_name(self, obj):
-        return obj.user.full_name
-    full_name.short_description = 'Full Name'
+    list_display = ('get_student_id', 'user', 'classroom')
+    list_filter = ('classroom',)
+    search_fields = ('user__user_id', 'user__full_name', 'classroom__name')
+    readonly_fields = ('get_student_id', 'user')  # Fields that should be read-only
 
-# Đăng ký các model với Django Admin
+
+# Register your models here.
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Teacher, TeacherAdmin)
 admin.site.register(Admin, AdminAdmin)

@@ -44,6 +44,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True, null=True, blank=True)
     phone_number = models.CharField(max_length=32, unique=True, null=True, blank=True)
     role = models.CharField(max_length=32, choices=USER_ROLE_CHOICES)
+    image = models.ImageField(upload_to='profile-images/', null=True, blank=True)
 
     full_name = models.CharField(max_length=255)
     sex = models.CharField(max_length=32, null=True, blank=True)
@@ -64,7 +65,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['email']
 
     def __str__(self):
-        return self.user_id
+        return f"{self.user_id} - {self.full_name} - {self.role}"
 
 class Teacher(models.Model):
     user = models.OneToOneField(CustomUser,primary_key=True, on_delete=models.CASCADE, related_name='teacher')
