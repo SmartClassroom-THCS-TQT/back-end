@@ -27,7 +27,7 @@ class ClassTimeSerializer(serializers.ModelSerializer):
         model = Time_slot
         fields = '__all__'
 
-class ClassSessionSerializer(serializers.ModelSerializer):
+class SessionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ClassSession
+        model = Session
         fields = '__all__'

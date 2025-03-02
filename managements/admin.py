@@ -1,67 +1,60 @@
 from django.contrib import admin
-from .models import *
+from .models import Room, Semester, Subject, Lesson, Time_slot, Session, Teacher_assignment
 
-# RoomAdmin để quản lý model Room
+# Admin for Room model
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'manager', 'get_capacity')
+    list_display = ('code', 'name', 'manager')
     search_fields = ('code', 'name')
+    readonly_fields = ('code',)  # 'code' is a primary key and should not be editable
     list_filter = ('manager',)
-    ordering = ('code',)
     
-    def get_capacity(self, obj):
-        # Assuming that the method `get_capacity` returns the count of students in the room
-        return obj.get_capacity()
-    get_capacity.short_description = ('Capacity')
+    def get_students(self, obj):
+        return obj.get_students().count()
 
-# SemesterAdmin để quản lý model Semester
+# Admin for Semester model
 class SemesterAdmin(admin.ModelAdmin):
-    list_display = ('name', 'start_date', 'end_date', 'weeks_count')
-    search_fields = ('name',)
+    list_display = ('code', 'start_date', 'weeks_count', 'end_date')
+    search_fields = ('code',)
+    readonly_fields = ('code', 'start_date', 'weeks_count', 'end_date')  # 'code' is primary key, 'start_date' and 'weeks_count' are defined
     list_filter = ('start_date',)
 
-# SubjectAdmin để quản lý model Subject
+# Admin for Subject model
 class SubjectAdmin(admin.ModelAdmin):
     list_display = ('code', 'name')
     search_fields = ('code', 'name')
+    readonly_fields = ('code',)  # 'code' is primary key and should not be editable
 
-# LessonAdmin để quản lý model Lesson
+# Admin for Lesson model
 class LessonAdmin(admin.ModelAdmin):
-    list_display = ('lesson_name', 'subject', 'session_count')
-    search_fields = ('lesson_name', 'subject__name')
-    list_filter = ('subject',)
+    list_display = ('lesson_name', 'semester_code', 'subject_code', 'lesson_number')
+    search_fields = ('lesson_name', 'semester_code__code', 'subject_code__name')
+    readonly_fields = ('id', 'semester_code', 'subject_code', 'lesson_number', 'lesson_name')  # id is auto-generated, other fields are defined
+    list_filter = ('semester_code', 'subject_code')
 
-# ClassTimeAdmin để quản lý model ClassTime
+# Admin for Time_slot model
 class TimeSlotAdmin(admin.ModelAdmin):
-    list_display = ('name', 'start_time', 'end_time')
-    search_fields = ('name', 'start_time', 'end_time')
-    list_filter = ('start_time', 'end_time')
-    ordering = ('name',)
-# ClassSessionAdmin để quản lý model ClassSession
-class ClassSessionAdmin(admin.ModelAdmin):
-    list_display = ('semester', 'class_room', 'day', 'time_slot', 'lesson', 'teacher', 'grade', 'absences', 'comment')
-    search_fields = ('semester__name', 'class_room__name', 'lesson__name', 'teachers__name')
-    list_filter = ('semester', 'class_room', 'time_slot', 'teacher', 'grade')
-    ordering = ('semester', 'class_room', 'day', 'time_slot')
+    list_display = ('code', 'start_time', 'end_time')
+    search_fields = ('code', 'start_time', 'end_time')
+    readonly_fields = ('code',)  # 'code' is unique, it should not be edited
 
-    def get_day(self, obj):
-        # Optionally, convert the `day` integer to a human-readable string
-        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        return days[obj.day - 1]
-    get_day.short_description = ('Day of Week')
+# Admin for Session model
+class SessionAdmin(admin.ModelAdmin):
+    list_display = ('room_code', 'subject_code', 'day', 'time_slot', 'lesson_name', 'teacher', 'statu')
+    search_fields = ('room_code__name', 'subject_code__name', 'teacher__user_id')
+    readonly_fields = ('id', 'semester_code', 'subject_code', 'room_code', 'day', 'time_slot', 'lesson_number', 'lesson_name', 'teacher', 'comment', 'absences', 'statu')  # All fields except grade and absences should be readonly
+    list_filter = ('semester_code', 'room_code', 'teacher')
 
-    def get_teacher(self, obj):
-        return obj.teachers.name
-    get_teacher.short_description = ('Teacher')
+# Admin for Teacher_assignment model
+class TeacherAssignmentAdmin(admin.ModelAdmin):
+    list_display = ('teacher', 'subject_code', 'semester_code', 'room_code')
+    search_fields = ('teacher__user_id', 'subject_code__name', 'semester_code__code', 'room_code__name')
+    readonly_fields = ('semester_code', 'subject_code', 'room_code', 'teacher')  # These fields are assigned and shouldn't be edited
 
-    def get_class_group(self, obj):
-        # Assuming you want to display some class group information (adjust as per your model)
-        return f"{obj.class_group}"
-    get_class_group.short_description = ('Class Group')
-
-# Đăng ký các model với Django Admin
+# Register all models with their respective admin
 admin.site.register(Room, RoomAdmin)
 admin.site.register(Semester, SemesterAdmin)
 admin.site.register(Subject, SubjectAdmin)
 admin.site.register(Lesson, LessonAdmin)
 admin.site.register(Time_slot, TimeSlotAdmin)
-admin.site.register(ClassSession, ClassSessionAdmin)
+admin.site.register(Session, SessionAdmin)
+admin.site.register(Teacher_assignment, TeacherAssignmentAdmin)
