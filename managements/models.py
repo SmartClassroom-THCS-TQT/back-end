@@ -52,6 +52,7 @@ class Subject(models.Model):
     code = models.BigIntegerField(primary_key=True)  
 
     name = models.CharField(max_length=255)  
+    description= models.TextField(blank=True, null=True)
     
     def __str__(self):
         return self.name
@@ -65,13 +66,13 @@ class Lesson(models.Model):
     lesson_name = models.CharField(max_length=255)
     detail = models.TextField(blank=True, null=True)  
     document = models.FileField(upload_to='lesson-documents/', blank=True, null=True)  # Document of the lesson
+    status = models.BooleanField(default=False)  # Status of the lesson
 
     def __str__(self):
         return self.lesson_name
 # bảng chia thời gian trong ngày học
 class Time_slot(models.Model):
-    id = models.AutoField(primary_key=True)
-    code = models.PositiveIntegerField(unique=True)  # Time slot number
+    code = models.PositiveIntegerField(primary_key=True)  # Time slot number
     start_time = models.TimeField()  # Start time of the session
     end_time = models.TimeField()  # End time of the session
 
@@ -97,12 +98,11 @@ class Session(models.Model):
     time_slot = models.ForeignKey(Time_slot, on_delete=models.CASCADE)  # Session time
 
     lesson_number = models.IntegerField()  # Lesson number
-    lesson_name = models.CharField(max_length=255)  # Lesson name
     teacher = models.ForeignKey('accounts.Teacher', on_delete=models.CASCADE,related_name='sessions')  # Teacher teaching the lesson
     comment = models.TextField(blank=True, null=True)  # Optional comment
     grade = models.CharField(max_length=1,choices=GRADE_CHOICES, blank=True, null=True)  # Grade of the class session
     absences = models.PositiveIntegerField(null=True, blank=True)  # Number of absences
-    statu = models.BooleanField(default=False)  # Status of the class session
+    status = models.BooleanField(default=False)  # Status of the class session
 
     def __str__(self):
         return f"{self.class_room} - {self.lesson} - {self.teacher}"
