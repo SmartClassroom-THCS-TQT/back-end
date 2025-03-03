@@ -5,7 +5,7 @@ from .models import *
 class SemesterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Semester
-        fields = ['name', 'start_date', 'weeks_count', 'end_date']
+        fields = ['code', 'start_date', 'weeks_count', 'end_date']
 
 class RoomSerializer(serializers.ModelSerializer):
     class Meta:

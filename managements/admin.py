@@ -12,11 +12,20 @@ class RoomAdmin(admin.ModelAdmin):
         return obj.get_students().count()
 
 # Admin for Semester model
+# class SemesterAdmin(admin.ModelAdmin):
+#     list_display = ('code', 'start_date', 'weeks_count', 'end_date')
+#     search_fields = ('code',)
+#     readonly_fields = ('code', 'start_date', 'weeks_count', 'end_date')  # 'code' is primary key, 'start_date' and 'weeks_count' are defined
+#     list_filter = ('start_date',)
 class SemesterAdmin(admin.ModelAdmin):
-    list_display = ('code', 'start_date', 'weeks_count', 'end_date')
-    search_fields = ('code',)
-    readonly_fields = ('code', 'start_date', 'weeks_count', 'end_date')  # 'code' is primary key, 'start_date' and 'weeks_count' are defined
-    list_filter = ('start_date',)
+    list_display = ['code', 'start_date', 'weeks_count', 'end_date']
+    search_fields = ['code', 'start_date']
+
+    # Thêm form validation tại đây nếu cần
+    def save_model(self, request, obj, form, change):
+        if obj.weeks_count is None:
+            raise ValueError('Weeks count cannot be None')
+        super().save_model(request, obj, form, change)
 
 # Admin for Subject model
 class SubjectAdmin(admin.ModelAdmin):

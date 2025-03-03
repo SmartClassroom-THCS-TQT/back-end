@@ -42,12 +42,12 @@ class Semester(models.Model):
         delta_days = (input_date - self.start_date).days
         current_week = (delta_days // 7) + 1
         if current_week > self.weeks_count:
-            return None  
+            return None  # Ngày vượt qua ngày kết thúc của học kỳ
         return current_week
 
 
     def __str__(self):
-        return f"{self.name} - {self.code}"
+        return f"{self.code} - {self.start_date} - {self.weeks_count} weeks- {self.end_date}"
 
 # bảng môn học
 class Subject(models.Model):
