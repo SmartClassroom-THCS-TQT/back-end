@@ -31,12 +31,21 @@ class TeacherAdmin(admin.ModelAdmin):
     search_fields = ('user__user_id', 'user__full_name', 'contract_types', 'expertise_levels')
     readonly_fields = ('get_teacher_id', 'user')  # Fields that should be read-only
 
+# class AdminAdmin(admin.ModelAdmin):
+#     list_display = ('get_admin_id', 'user', 'contract_types', 'expertise_levels', 'description')
+#     list_filter = ('contract_types', 'expertise_levels')
+#     search_fields = ('user__user_id', 'user__full_name', 'contract_types', 'expertise_levels', 'description')
+#     readonly_fields = ('get_admin_id', 'user')  # Fields that should be read-only
+
 class AdminAdmin(admin.ModelAdmin):
     list_display = ('get_admin_id', 'user', 'contract_types', 'expertise_levels', 'description')
     list_filter = ('contract_types', 'expertise_levels')
     search_fields = ('user__user_id', 'user__full_name', 'contract_types', 'expertise_levels', 'description')
     readonly_fields = ('get_admin_id', 'user')  # Fields that should be read-only
-
+    
+    def get_admin_id(self, obj):
+        return obj.user.user_id  # Chắc chắn rằng phương thức này trả về giá trị hợp lệ
+    get_admin_id.short_description = 'Admin ID'  # Tùy chỉnh tiêu đề của cột
 class StudentAdmin(admin.ModelAdmin):
     list_display = ('get_student_id', 'user', 'classroom')
     list_filter = ('classroom',)
