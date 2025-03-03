@@ -17,17 +17,17 @@ class Room (models.Model):
         return self.students.count()  # Trả về số học sinh trong phòng học
     def __str__(self):
         return self.name + ' - ' + self.code
+    class Meta:
+        db_table = 'room'
+        verbose_name = 'Room'
+        verbose_name_plural = 'Rooms'
+        #ordering = ['name']  # Bạn có thể sắp xếp theo tên phòng học 
 # Bảng học kỳ   
 class Semester(models.Model):
     code = models.IntegerField(primary_key=True)
 
     start_date = models.DateField()
     weeks_count = models.IntegerField()
-
-    class Meta:
-        db_table = 'semester'
-        verbose_name = 'Semester'
-        verbose_name_plural = 'Semesters'
 
     def get_day_end(self):
         return self.start_date + timedelta(weeks=self.weeks_count)
@@ -44,6 +44,11 @@ class Semester(models.Model):
         if current_week > self.weeks_count:
             return None  # Ngày vượt qua ngày kết thúc của học kỳ
         return current_week
+    class Meta:
+        db_table = 'semester'
+        verbose_name = 'Semester'
+        verbose_name_plural = 'Semesters'
+        ordering = ['start_date']  # Sắp xếp theo ngày bắt đầu của học kỳ
 
 
     def __str__(self):
@@ -58,6 +63,11 @@ class Subject(models.Model):
     
     def __str__(self):
         return self.name + ' - ' + str(self.code)
+    class Meta:
+        db_table = 'subject'
+        verbose_name = 'Subject'
+        verbose_name_plural = 'Subjects'
+        #ordering = ['name']  # Sắp xếp theo tên môn học
 
 # bảng chia thời gian trong ngày học
 class Time_slot(models.Model):
@@ -67,6 +77,12 @@ class Time_slot(models.Model):
 
     def __str__(self):
         return f"Session {self.code} from {self.start_time} to {self.end_time}"
+    
+    class Meta:
+        db_table = 'time_slot'
+        verbose_name = 'Time Slot'
+        verbose_name_plural = 'Time Slots'
+        ordering = ['start_time']  # Sắp xếp theo thời gian bắt đầu
   
     
 
@@ -99,6 +115,12 @@ class Session(models.Model):
     def __str__(self):
         return f"{self.semester_code} - {self.room_code} - {self.day} - {self.time_slot} - {self.subject_code} - {self.teacher}"
     
+    class Meta:
+        db_table = 'session'
+        verbose_name = 'Session'
+        verbose_name_plural = 'Sessions'
+        ordering = ['day', 'time_slot']  # Sắp xếp theo ngày và thời gian phiên học   
+
 class Teacher_assignment(models.Model):
     semester_code = models.ForeignKey(Semester, on_delete=models.CASCADE,related_name='teacher_assignment')  # Semester of the assignment
     subject_code = models.ForeignKey(Subject, on_delete=models.CASCADE,related_name='teacher_assignment')  # Subject of the assignment
@@ -108,3 +130,9 @@ class Teacher_assignment(models.Model):
 
     def __str__(self):
         return f"{self.semester_code} - {self.subject_code} - {self.room_code} - {self.teacher}"
+    
+    class Meta:
+        db_table = 'teacher_assignment'
+        verbose_name = 'Teacher Assignment'
+        verbose_name_plural = 'Teacher Assignments'
+        unique_together = ['semester_code', 'subject_code', 'room_code', 'teacher']  # Đảm bảo không có sự trùng lặp

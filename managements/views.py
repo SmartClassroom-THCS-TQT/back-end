@@ -5,6 +5,10 @@ from .serializers import *
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+from datetime import timedelta
+from django.utils.dateparse import parse_date
+from django.db import connection
+from rest_framework.permissions import AllowAny
 
 # Semester ViewSet
 class SemesterViewSet(viewsets.ModelViewSet):
@@ -53,3 +57,43 @@ class CheckCurrentSemester(APIView):
         
         return Response({"message": "No active semester found."}, status=status.HTTP_404_NOT_FOUND)
     
+
+class GenerateTimetableAPIView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        try:
+            semester_code = request.data.get('semester_code')
+            room_code = request.data.get('room_code')
+            subject_code = request.data.get('subject_code')
+            day = parse_date(request.data.get('day'))
+            time_slot_code = request.data.get('time_slot_code')
+            teacher_id = request.data.get('teacher_id')
+
+            if not all([semester_code, room_code, subject_code, day, time_slot_code, teacher_id]):
+                return Response({'error': 'Missing required fields'}, status=status.HTTP_400_BAD_REQUEST)
+
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT start_date, weeks_count FROM semester WHERE code = %s", [semester_code])
+                semester = cursor.fetchone()
+                if not semester:
+                    return Response({'error': 'Semester not found'}, status=status.HTTP_404_NOT_FOUND)
+
+                start_date, weeks_count = semester
+                end_date = start_date + timedelta(weeks=weeks_count)
+                sessions = []
+
+                for week in range(weeks_count):
+                    session_date = day + timedelta(weeks=week)
+                    if session_date > end_date:
+                        break
+                    sessions.append((semester_code, room_code, subject_code, session_date, time_slot_code, teacher_id, week + 1, f"Lesson {week + 1}"))
+                
+                cursor.executemany("""
+                    INSERT INTO session (semester_code_id, room_code_id, subject_code_id, day, time_slot_id, teacher_id, lesson_number, lesson_name)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, sessions)
+
+            return Response({'message': f'{len(sessions)} sessions created successfully'}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

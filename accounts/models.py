@@ -66,6 +66,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.user_id} - {self.full_name} - {self.role}"
+    class Meta:
+        db_table = 'custom_user'
+        verbose_name = 'All-User'
+        verbose_name_plural = 'Users'
+        ordering = ['full_name']  # Có thể thêm sắp xếp theo tên đầy đủ người dùng
 
 class Teacher(models.Model):
     user = models.OneToOneField(CustomUser,primary_key=True, on_delete=models.CASCADE, related_name='teacher')
@@ -77,9 +82,10 @@ class Teacher(models.Model):
     def __str__(self):
         return f"{self.user.full_name} - {self.user.user_id}"
     class Meta:
-        db_table = 'Teacher'
+        db_table = 'teacher'
         verbose_name = 'Teacher'
         verbose_name_plural = 'Teachers'
+        ordering = ['user__full_name']  # Sắp xếp theo tên đầy đủ của người dùng
 
 class Admin(models.Model):
     user = models.OneToOneField(CustomUser,primary_key=True, on_delete=models.CASCADE,related_name='admin')
@@ -91,9 +97,10 @@ class Admin(models.Model):
     def __str__(self):
         return f"{self.user.full_name} - {self.user.user_id}"
     class Meta:
-        db_table = 'Admin'
+        db_table = 'admin'
         verbose_name = 'Admin'
         verbose_name_plural = 'Admins'
+        ordering = ['user__full_name']  # Sắp xếp theo tên đầy đủ của người dùng
 
   
 class Student(models.Model):
@@ -104,9 +111,10 @@ class Student(models.Model):
     def __str__(self):
         return f"{self.user.full_name} - {self.user.user_id}"
     class Meta:
-        db_table = 'Student'
+        db_table = 'student'
         verbose_name = 'Student'
         verbose_name_plural = 'Students'
+        ordering = ['user__full_name']  # Sắp xếp theo tên đầy đủ của người dùng
 
 
 

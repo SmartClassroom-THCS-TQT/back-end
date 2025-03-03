@@ -2,14 +2,20 @@ from django.contrib import admin
 from .models import Room, Semester, Subject, Time_slot, Session, Teacher_assignment
 
 # Admin for Room model
-class RoomAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'manager')
-    search_fields = ('code', 'name')
-    readonly_fields = ('code',)  # 'code' is a primary key and should not be editable
-    list_filter = ('manager',)
+# class RoomAdmin(admin.ModelAdmin):
+#     list_display = ('code', 'name', 'manager')
+#     search_fields = ('code', 'name')
+#     readonly_fields = ('code',)  # 'code' is a primary key and should not be editable
+#     list_filter = ('manager',)
     
-    def get_students(self, obj):
-        return obj.get_students().count()
+#     def get_students(self, obj):
+#         return obj.get_students().count()
+class RoomAdmin(admin.ModelAdmin):
+    list_display = ('code', 'name', 'manager', 'student_count')
+
+    def student_count(self, obj):
+        return obj.get_capacity()
+    student_count.short_description = 'Number of Students'
 
 # Admin for Semester model
 # class SemesterAdmin(admin.ModelAdmin):
@@ -38,7 +44,7 @@ class SubjectAdmin(admin.ModelAdmin):
 class TimeSlotAdmin(admin.ModelAdmin):
     list_display = ('code', 'start_time', 'end_time')
     search_fields = ('code', 'start_time', 'end_time')
-    readonly_fields = ('code',)  # 'code' is unique, it should not be edited
+    
 
 # Admin for Session model
 class SessionAdmin(admin.ModelAdmin):
