@@ -15,6 +15,8 @@ class Room (models.Model):
         return Student.objects.filter(classroom=self)
     def get_capacity(self):
         return self.students.count()  # Trả về số học sinh trong phòng học
+    def __str__(self):
+        return self.name + ' - ' + self.code
 # Bảng học kỳ   
 class Semester(models.Model):
     code = models.IntegerField(primary_key=True)
@@ -45,8 +47,7 @@ class Semester(models.Model):
 
 
     def __str__(self):
-        day_end = self.get_day_end()
-        return f"{self.name}"
+        return f"{self.name} - {self.code}"
 
 # bảng môn học
 class Subject(models.Model):
@@ -56,11 +57,8 @@ class Subject(models.Model):
     description= models.TextField(blank=True, null=True)
     
     def __str__(self):
-        return self.name
+        return self.name + ' - ' + str(self.code)
 
-
-    def __str__(self):
-        return self.lesson_name
 # bảng chia thời gian trong ngày học
 class Time_slot(models.Model):
     code = models.PositiveIntegerField(primary_key=True)  # Time slot number
@@ -99,7 +97,7 @@ class Session(models.Model):
     status = models.BooleanField(default=False)  # Status of the class session
 
     def __str__(self):
-        return f"{self.class_room} - {self.lesson} - {self.teacher}"
+        return f"{self.semester_code} - {self.room_code} - {self.day} - {self.time_slot} - {self.subject_code} - {self.teacher}"
     
 class Teacher_assignment(models.Model):
     semester_code = models.ForeignKey(Semester, on_delete=models.CASCADE,related_name='teacher_assignment')  # Semester of the assignment
@@ -109,4 +107,4 @@ class Teacher_assignment(models.Model):
     teacher = models.ForeignKey('accounts.Teacher', on_delete=models.CASCADE, related_name='teacher_assignment')  # Teacher of the assignment
 
     def __str__(self):
-        return f"{self.teacher} - {self.subject} - {self.semester}"
+        return f"{self.semester_code} - {self.subject_code} - {self.room_code} - {self.teacher}"
