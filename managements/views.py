@@ -67,9 +67,8 @@ class GenerateTimetableAPIView(APIView):
             subject_code = request.data.get('subject_code')
             day = parse_date(request.data.get('day'))
             time_slot_code = request.data.get('time_slot_code')
-            teacher_id = request.data.get('teacher_id')
 
-            if not all([semester_code, room_code, subject_code, day, time_slot_code, teacher_id]):
+            if not all([semester_code, room_code, subject_code, day, time_slot_code]):
                 return Response({'error': 'Missing required fields'}, status=status.HTTP_400_BAD_REQUEST)
 
             with connection.cursor() as cursor:
@@ -86,11 +85,13 @@ class GenerateTimetableAPIView(APIView):
                     session_date = day + timedelta(weeks=week)
                     if session_date > end_date:
                         break
-                    sessions.append((semester_code, room_code, subject_code, session_date, time_slot_code, teacher_id, week + 1, f"Lesson {week + 1}"))
+                    sessions.append((semester_code, room_code, subject_code, session_date, time_slot_code, week + 1, f"Lesson {week + 1}"))
                 
                 cursor.executemany("""
-                    INSERT INTO session (semester_code_id, room_code_id, subject_code_id, day, time_slot_id, teacher_id, lesson_number, lesson_name)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO session 
+                    (semester_code_id, room_code_id, subject_code_id, day, time_slot_id, lesson_number, lesson_name, status) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, FALSE);
+
                 """, sessions)
 
             return Response({'message': f'{len(sessions)} sessions created successfully'}, status=status.HTTP_201_CREATED)

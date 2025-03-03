@@ -102,7 +102,7 @@ class Session(models.Model):
     day = models.DateField()  # Session day
     time_slot = models.ForeignKey(Time_slot, on_delete=models.CASCADE)  # Session time
 
-    teacher = models.ForeignKey('accounts.Teacher', on_delete=models.CASCADE,related_name='sessions')  # Teacher teaching the lesson
+    teacher = models.ForeignKey('accounts.Teacher', on_delete=models.CASCADE,related_name='sessions', null=True , blank=True)  # Teacher teaching the lesson
     lesson_number = models.IntegerField()  # Lesson number
     lesson_name = models.CharField(max_length=255)
     detail = models.TextField(blank=True, null=True)  
@@ -113,7 +113,7 @@ class Session(models.Model):
     status = models.BooleanField(default=False)  # Status of the class session
 
     def __str__(self):
-        return f"{self.semester_code} - {self.room_code} - {self.day} - {self.time_slot} - {self.subject_code} - {self.teacher}"
+        return f"Học kì: {self.semester_code.code} - Lớp {self.room_code.code} - Ngày:{self.day} - Tiết: {self.time_slot.code} - Môn: {self.subject_code.code} - Giáo viên:  {self.teacher}"
     
     class Meta:
         db_table = 'session'

@@ -2,14 +2,7 @@ from django.contrib import admin
 from .models import Room, Semester, Subject, Time_slot, Session, Teacher_assignment
 
 # Admin for Room model
-# class RoomAdmin(admin.ModelAdmin):
-#     list_display = ('code', 'name', 'manager')
-#     search_fields = ('code', 'name')
-#     readonly_fields = ('code',)  # 'code' is a primary key and should not be editable
-#     list_filter = ('manager',)
-    
-#     def get_students(self, obj):
-#         return obj.get_students().count()
+
 class RoomAdmin(admin.ModelAdmin):
     list_display = ('code', 'name', 'manager', 'student_count')
 
@@ -17,12 +10,7 @@ class RoomAdmin(admin.ModelAdmin):
         return obj.get_capacity()
     student_count.short_description = 'Number of Students'
 
-# Admin for Semester model
-# class SemesterAdmin(admin.ModelAdmin):
-#     list_display = ('code', 'start_date', 'weeks_count', 'end_date')
-#     search_fields = ('code',)
-#     readonly_fields = ('code', 'start_date', 'weeks_count', 'end_date')  # 'code' is primary key, 'start_date' and 'weeks_count' are defined
-#     list_filter = ('start_date',)
+
 class SemesterAdmin(admin.ModelAdmin):
     list_display = ['code', 'start_date', 'weeks_count', 'end_date']
     search_fields = ['code', 'start_date']
@@ -37,7 +25,7 @@ class SemesterAdmin(admin.ModelAdmin):
 class SubjectAdmin(admin.ModelAdmin):
     list_display = ('code', 'name')
     search_fields = ('code', 'name')
-    readonly_fields = ('code',)  # 'code' is primary key and should not be editable
+    
 
 
 # Admin for Time_slot model
