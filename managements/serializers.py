@@ -17,10 +17,6 @@ class SubjectSerializer(serializers.ModelSerializer):
         model = Subject
         fields = '__all__'
 
-class LessonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Lesson
-        fields = '__all__'
 
 class ClassTimeSerializer(serializers.ModelSerializer):
     class Meta:

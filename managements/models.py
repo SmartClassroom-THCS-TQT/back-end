@@ -3,7 +3,8 @@ from django.db import models
 # Create your models here.
 from django.db import models
 from datetime import timedelta, date
-from accounts.models import Student, Teacher, Admin
+from accounts.models import Student
+
 
 class Room (models.Model):
     code = models.CharField(max_length=10, primary_key=True)
@@ -56,17 +57,7 @@ class Subject(models.Model):
     
     def __str__(self):
         return self.name
-# Bảng bài học
-class Lesson(models.Model):
-    id = models.AutoField(primary_key=True)
-    semester_code = models.ForeignKey(Semester, on_delete=models.CASCADE,related_name='lessons')  # Semester of the lesson
-    subject_code = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='lessons')  # Subject of the lesson
 
-    lesson_number = models.PositiveIntegerField()  # Number of sessions based on the program
-    lesson_name = models.CharField(max_length=255)
-    detail = models.TextField(blank=True, null=True)  
-    document = models.FileField(upload_to='lesson-documents/', blank=True, null=True)  # Document of the lesson
-    status = models.BooleanField(default=False)  # Status of the lesson
 
     def __str__(self):
         return self.lesson_name
@@ -97,8 +88,11 @@ class Session(models.Model):
     day = models.DateField()  # Session day
     time_slot = models.ForeignKey(Time_slot, on_delete=models.CASCADE)  # Session time
 
-    lesson_number = models.IntegerField()  # Lesson number
     teacher = models.ForeignKey('accounts.Teacher', on_delete=models.CASCADE,related_name='sessions')  # Teacher teaching the lesson
+    lesson_number = models.IntegerField()  # Lesson number
+    lesson_name = models.CharField(max_length=255)
+    detail = models.TextField(blank=True, null=True)  
+    document = models.FileField(upload_to='lesson-documents/', blank=True, null=True)  # Document of the lesson
     comment = models.TextField(blank=True, null=True)  # Optional comment
     grade = models.CharField(max_length=1,choices=GRADE_CHOICES, blank=True, null=True)  # Grade of the class session
     absences = models.PositiveIntegerField(null=True, blank=True)  # Number of absences

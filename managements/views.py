@@ -21,10 +21,6 @@ class SubjectViewSet(viewsets.ModelViewSet):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
 
-# Lesson ViewSet
-class LessonViewSet(viewsets.ModelViewSet):
-    queryset = Lesson.objects.all()
-    serializer_class = LessonSerializer
 
 # Time Slot ViewSet
 class TimeSlotViewSet(viewsets.ModelViewSet):
