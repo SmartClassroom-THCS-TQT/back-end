@@ -17,6 +17,8 @@ from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
 from django.db import connection
 from rest_framework.decorators import api_view
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.conf import settings
 
 # API lấy token CSRF
 class CSRFTokenView(APIView):
@@ -127,7 +129,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
-
+    parser_classes = [MultiPartParser, FormParser]  # Để hỗ trợ upload ảnh
 
     @action(detail=False, methods=['get'], url_path='detail', permission_classes=[IsAuthenticated])
     def my_detail(self, request):
@@ -136,36 +138,59 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         → Trả về thông tin của chính người dùng đang đăng nhập (bao gồm tất cả thông tin role).
         """
         user = request.user
+        user_data = self.get_user_data(user.user_id)
         
-        # Xử lý dựa trên role của user
-        role = user.role
-        if role == 'teacher':
-            teacher = get_object_or_404(Teacher, user=user)
-            teacher_data = TeacherSerializer(teacher).data
-            return Response({
-                **CustomUserSerializer(user).data,
-                'teacher': teacher_data
-            })
+        if not user_data:
+            return Response({'error': 'User not found'}, status=404)
 
-        elif role == 'admin':
-            admin = get_object_or_404(Admin, user=user)
-            admin_data = AdminSerializer(admin).data
-            return Response({
-                **CustomUserSerializer(user).data,
-                'admin': admin_data
-            })
-
-        elif role == 'student':
-            student = get_object_or_404(Student, user=user)
-            student_data = StudentSerializer(student).data
-            return Response({
-                **CustomUserSerializer(user).data,
-                'student': student_data
-            })
+        role_data = self.get_role_data(user_data['user_id'], user_data['role'])
+        if role_data:
+            user_data.update(role_data)
         
-        return Response({
-            'error': 'Role không hợp lệ'
-        }, status=400)
+        return Response(user_data)
+
+    def get_user_data(self, user_id):
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT user_id, email, phone_number, role, image, full_name, sex, day_of_birth, nation,
+                       active_status, is_active, is_staff, is_superuser, date_joined, last_login
+                FROM custom_user
+                WHERE user_id = %s
+            """, [user_id])
+            row = cursor.fetchone()
+        
+        if row:
+            image_url = f"{settings.MEDIA_URL}{row[4]}" if row[4] else None
+            return {
+                'user_id': row[0], 'email': row[1], 'phone_number': row[2], 'role': row[3],
+                'image': image_url if row[4] else None, 'full_name': row[5], 'sex': row[6],
+                'day_of_birth': row[7], 'nation': row[8], 'active_status': row[9],
+                'is_active': row[10], 'is_staff': row[11], 'is_superuser': row[12],
+                'date_joined': row[13], 'last_login': row[14]
+            }
+        return None
+
+    def get_role_data(self, user_id, role):
+        role_query = {
+            'teacher': "SELECT contract_types, expertise_levels, subjects FROM teacher WHERE user_id = %s",
+            'admin': "SELECT contract_types, expertise_levels, description FROM admin WHERE user_id = %s",
+            'student': "SELECT classroom_id FROM student WHERE user_id = %s",
+        }
+        
+        if role in role_query:
+            with connection.cursor() as cursor:
+                cursor.execute(role_query[role], [user_id])
+                row = cursor.fetchone()
+            
+            if row:
+                if role == 'teacher':
+                    return {'teacher': {'contract_types': row[0], 'expertise_levels': row[1], 'subjects': row[2]}}
+                elif role == 'admin':
+                    return {'admin': {'contract_types': row[0], 'expertise_levels': row[1], 'description': row[2]}}
+                elif role == 'student':
+                    return {'student': {'classroom_id': row[0]}}
+        return None
+
 
     @action(detail=False, methods=['get'], url_path='detail/(?P<user_id>[^/.]+)', permission_classes=[IsAuthenticated])
     def user_detail(self, request, user_id):
@@ -176,37 +201,15 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         if request.user.role != 'admin':
             return Response({"error": "Bạn không có quyền xem thông tin này."}, status=403)
 
-        user = get_object_or_404(CustomUser, user_id=user_id)
+        user_data = self.get_user_data(user_id)
+        if not user_data:
+            return Response({'error': 'User not found'}, status=404)
 
-        # Lấy thông tin chi tiết từ bảng phù hợp dựa trên role
-        role = user.role
-        if role == 'teacher':
-            teacher = get_object_or_404(Teacher, user=user)
-            teacher_data = TeacherSerializer(teacher).data
-            return Response({
-                **CustomUserSerializer(user).data,
-                'teacher': teacher_data
-            })
-
-        elif role == 'admin':
-            admin = get_object_or_404(Admin, user=user)
-            admin_data = AdminSerializer(admin).data
-            return Response({
-                **CustomUserSerializer(user).data,
-                'admin': admin_data
-            })
-
-        elif role == 'student':
-            student = get_object_or_404(Student, user=user)
-            student_data = StudentSerializer(student).data
-            return Response({
-                **CustomUserSerializer(user).data,
-                'student': student_data
-            })
+        role_data = self.get_role_data(user_data['user_id'], user_data['role'])
+        if role_data:
+            user_data.update(role_data)
         
-        return Response({
-            'error': 'Role không hợp lệ'
-        }, status=400)
+        return Response(user_data)
 
     @action(detail=False, methods=['put'], url_path='update', permission_classes=[IsAuthenticated])
     def update_self(self, request):
@@ -226,7 +229,43 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         user = get_object_or_404(CustomUser, user_id=pk)
         return self._update_user(request, user, is_admin=True)
 
-    def _update_user(self, request, user, is_admin):
+    # def _update_user(self, request, user, is_admin):
+    #     """
+    #     Xử lý cập nhật thông tin user (dùng chung cho self-update và admin-update).
+    #     """
+    #     update_data = request.data.copy()
+
+    #     # Cấm thay đổi user_id và role
+    #     update_data.pop("user_id", None)
+    #     update_data.pop("role", None)
+
+    #     # Cập nhật CustomUser
+    #     user_serializer = CustomUserSerializer(user, data=update_data, partial=True)
+    #     if user_serializer.is_valid():
+    #         user_serializer.save()
+
+    #         # Cập nhật dữ liệu bổ sung của role (Student, Teacher, Admin)
+    #         if hasattr(user, user.role):
+    #             role_instance = getattr(user, user.role)
+    #             role_serializer_class = {
+    #                 'student': StudentSerializer,
+    #                 'teacher': TeacherSerializer,
+    #                 'admin': AdminSerializer
+    #             }.get(user.role)
+
+    #             # Cập nhật dữ liệu riêng của Student, Teacher, Admin
+    #             role_fields = [f.name for f in role_instance._meta.fields]
+    #             extra_data = {k: v for k, v in update_data.items() if k in role_fields}
+
+    #             if extra_data:
+    #                 role_serializer = role_serializer_class(role_instance, data=extra_data, partial=True)
+    #                 if role_serializer.is_valid():
+    #                     role_serializer.save()
+
+    #         return Response({"message": "Cập nhật thành công", "user": user_serializer.data})
+
+    #     return Response(user_serializer.errors, status=400)
+    def _update_user(self, request, user_id, is_admin):
         """
         Xử lý cập nhật thông tin user (dùng chung cho self-update và admin-update).
         """
@@ -236,53 +275,37 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         update_data.pop("user_id", None)
         update_data.pop("role", None)
 
+        # Xử lý ảnh đại diện nếu có
+        image = request.FILES.get('image')
+        if image:
+            update_data['image'] = image
+
         # Cập nhật CustomUser
-        user_serializer = CustomUserSerializer(user, data=update_data, partial=True)
-        if user_serializer.is_valid():
-            user_serializer.save()
+        with connection.cursor() as cursor:
+            set_clause = ", ".join([f"{key} = %s" for key in update_data.keys()])
+            values = list(update_data.values()) + [user_id]
+            cursor.execute(f"""
+                UPDATE custom_user
+                SET {set_clause}
+                WHERE user_id = %s
+            """, values)
+        
+        # Lấy thông tin user sau cập nhật
+        user_data = self.get_user_data(user_id)
+        if not user_data:
+            return Response({'error': 'User not found'}, status=404)
 
-            # Cập nhật dữ liệu bổ sung của role (Student, Teacher, Admin)
-            if hasattr(user, user.role):
-                role_instance = getattr(user, user.role)
-                role_serializer_class = {
-                    'student': StudentSerializer,
-                    'teacher': TeacherSerializer,
-                    'admin': AdminSerializer
-                }.get(user.role)
-
-                # Cập nhật dữ liệu riêng của Student, Teacher, Admin
-                role_fields = [f.name for f in role_instance._meta.fields]
-                extra_data = {k: v for k, v in update_data.items() if k in role_fields}
-
-                if extra_data:
-                    role_serializer = role_serializer_class(role_instance, data=extra_data, partial=True)
-                    if role_serializer.is_valid():
-                        role_serializer.save()
-
-            return Response({"message": "Cập nhật thành công", "user": user_serializer.data})
-
-        return Response(user_serializer.errors, status=400)
-    # def _get_user_detail(self, user):
-    #     """
-    #     Lấy thông tin đầy đủ của user, bao gồm cả bảng Student, Teacher hoặc Admin.
-    #     """
-    #     user_serializer = CustomUserSerializer(user)
-    #     user_data = user_serializer.data
-
-    #     # Lấy thông tin từ bảng Student, Teacher hoặc Admin
-    #     if hasattr(user, user.role):
-    #         role_instance = getattr(user, user.role)
-    #         role_serializer_class = {
-    #             'student': StudentSerializer,
-    #             'teacher': TeacherSerializer,
-    #             'admin': AdminSerializer
-    #         }.get(user.role)
-
-    #         role_serializer = role_serializer_class(role_instance)
-    #         user_data.update(role_serializer.data)
-
-    #     return Response(user_data)
+        # Cập nhật thông tin role nếu có
+        role_data = self.get_role_data(user_id, user_data['role'], update_data)
+        if role_data:
+            user_data.update(role_data)
+        
+        return Response({"message": "Cập nhật thành công", "user": user_data})
     
+
+
+
+
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
 
