@@ -9,6 +9,7 @@ from datetime import timedelta
 from django.utils.dateparse import parse_date
 from django.db import connection
 from rest_framework.permissions import AllowAny
+from django.conf import settings
 
 # Semester ViewSet
 class SemesterViewSet(viewsets.ModelViewSet):
@@ -98,3 +99,46 @@ class GenerateTimetableAPIView(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class StudentsInRoomView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, code, format=None):
+        try:
+            # Kiểm tra xem phòng học có tồn tại không
+            room = Room.objects.get(code=code)
+        except Room.DoesNotExist:
+            return Response({"detail": "Room not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Sử dụng truy vấn SQL trực tiếp để lấy danh sách học sinh trong lớp, bao gồm image
+        query = """
+            SELECT 
+                s.user_id, s.full_name, s.email, s.phone_number, s.sex, s.day_of_birth, 
+                s.nation, s.active_status, s.image
+            FROM 
+                student st  -- Bảng students
+            INNER JOIN custom_user s ON st.user_id = s.user_id  -- Bảng custom_user
+            WHERE st.classroom_id = %s
+        """
+                
+        with connection.cursor() as cursor:
+            cursor.execute(query, [room.code])
+            result = cursor.fetchall()
+
+        # Chuyển đổi kết quả SQL thành dạng JSON, bao gồm cả trường image
+        students_data = [
+            {
+                "user_id": row[0],
+                "full_name": row[1],
+                "email": row[2],
+                "phone_number": row[3],
+                "sex": row[4],
+                "day_of_birth": row[5],
+                "nation": row[6],
+                "active_status": row[7],
+                "image_url": f"{settings.MEDIA_URL}{row[8]}" if row[8] else None  # Thêm MEDIA_URL vào đường dẫn ảnh
+            }
+            for row in result
+        ]
+
+        return Response(students_data)

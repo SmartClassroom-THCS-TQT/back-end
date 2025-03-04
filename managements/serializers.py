@@ -1,6 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from .models import *
+from accounts.models import Student,CustomUser
 
 class SemesterSerializer(serializers.ModelSerializer):
     class Meta:
