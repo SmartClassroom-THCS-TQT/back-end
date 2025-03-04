@@ -360,6 +360,64 @@ class UserDetailView(APIView):
     
     permission_classes = [AllowAny]  # Nếu cần xác thực thì dùng IsAuthenticated
     
+    # def post(self, request):
+    #     role = request.data.get("role")
+    #     requested_fields = request.data.get("fields", [])
+        
+    #     # Danh sách role hợp lệ và bảng tương ứng
+    #     valid_roles = {"teacher": "teacher", "admin": "admin", "student": "student"}
+    #     if role not in valid_roles:
+    #         return Response({"error": "Invalid role"}, status=400)
+
+    #     table_name = valid_roles[role]
+
+    #     # Mapping các trường hợp lệ giữa custom_user và bảng con (teacher/admin/student)
+    #     valid_fields = {
+    #         "user_id": "custom_user.user_id",
+    #         "full_name": "custom_user.full_name",
+    #         "phone_number": "custom_user.phone_number",
+    #         "image": "custom_user.image",
+    #         "email": "custom_user.email",
+    #         "sex": "custom_user.sex",
+    #         "day_of_birth": "custom_user.day_of_birth",
+    #         "nation": "custom_user.nation",
+    #         "active_status": "custom_user.active_status",
+    #         "contract_types": f"{table_name}.contract_types" if role in ["teacher", "admin"] else None,
+    #         "expertise_levels": f"{table_name}.expertise_levels" if role in ["teacher", "admin"] else None,
+    #         "description": f"{table_name}.description" if role == "admin" else None,
+    #         "classroom": "student.classroom_id" if role == "student" else None,
+    #         "subjects": "teacher.subjects" if role == "teacher" else None 
+    #     }
+
+    #     # Kiểm tra các fields hợp lệ
+    #     selected_fields = []
+    #     for field in requested_fields:
+    #         if valid_fields.get(field) is not None:
+    #             selected_fields.append(valid_fields[field])
+    #         else:
+    #             return Response({"error": f"'{field}' not found in {role}"}, status=400)
+
+    #     if not selected_fields:
+    #         return Response({"error": "No valid fields requested"}, status=400)
+
+    #     fields_str = ", ".join(selected_fields)
+        
+    #     # Truy vấn dữ liệu từ PostgreSQL
+    #     query = f"""
+    #         SELECT {fields_str} FROM custom_user
+    #         LEFT JOIN {table_name} ON custom_user.user_id = {table_name}.user_id
+    #         WHERE custom_user.role = %s
+    #     """
+
+    #     with connection.cursor() as cursor:
+    #         cursor.execute(query, [role])
+    #         columns = [col[0] for col in cursor.description]
+    #         results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+    #     if not results:
+    #         return Response({"error": f"No {role} found"}, status=404)
+
+    #     return Response({"data": results})
     def post(self, request):
         role = request.data.get("role")
         requested_fields = request.data.get("fields", [])
@@ -376,7 +434,7 @@ class UserDetailView(APIView):
             "user_id": "custom_user.user_id",
             "full_name": "custom_user.full_name",
             "phone_number": "custom_user.phone_number",
-            #"image": "custom_user.image",
+            "image": "custom_user.image",
             "email": "custom_user.email",
             "sex": "custom_user.sex",
             "day_of_birth": "custom_user.day_of_birth",
@@ -416,5 +474,10 @@ class UserDetailView(APIView):
 
         if not results:
             return Response({"error": f"No {role} found"}, status=404)
+
+        # Cập nhật đường dẫn hình ảnh
+        for result in results:
+            if "image" in result and result["image"]:
+                result["image"] = settings.MEDIA_URL + result["image"]
 
         return Response({"data": results})
