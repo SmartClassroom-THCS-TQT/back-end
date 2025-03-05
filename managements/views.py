@@ -11,6 +11,7 @@ from django.db import connection
 from rest_framework.permissions import AllowAny
 from django.conf import settings
 from rest_framework.decorators import action
+from datetime import datetime, timedelta
 
 # Semester ViewSet
 class SemesterViewSet(viewsets.ModelViewSet):
@@ -37,12 +38,177 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
 class SessionViewSet(viewsets.ModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
+    permission_classes = [AllowAny]
+    
+    def list(self, request, *args, **kwargs):
+        # Lấy tham số từ request
+        day = request.GET.get("day")
+        semester_code = request.GET.get("semester_code")
+        room_code = request.GET.get("room_code")
+        teacher_id = request.GET.get("teacher_id")
+        subject_code = request.GET.get("subject_code")
+
+        # Kiểm tra định dạng ngày
+        try:
+            start_date = datetime.strptime(day, "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            return Response({"error": "Invalid date format. Use YYYY-MM-DD"}, status=400)
+
+        end_date = start_date + timedelta(days=6)  # 7 ngày liên tiếp
+
+        # Xây dựng điều kiện lọc động
+        filters = ["s.day BETWEEN %s AND %s"]
+        params = [start_date, end_date]
+
+        if semester_code:
+            filters.append("s.semester_code_id = %s")
+            params.append(semester_code)
+        if room_code:
+            filters.append("s.room_code_id = %s")
+            params.append(room_code)
+        if teacher_id:
+            filters.append("s.teacher_id = %s")
+            params.append(teacher_id)
+        if subject_code:
+            filters.append("s.subject_code_id = %s")
+            params.append(subject_code)
+
+        where_clause = " AND ".join(filters)
+
+        # Raw SQL query
+        query = f"""
+            SELECT 
+                s.id, 
+                r.name AS room_name, 
+                ts.start_time || ' - ' || ts.end_time AS time_slot, 
+                sub.name AS subject_name, 
+                s.lesson_name, 
+                s.status
+            FROM session s
+            JOIN room r ON s.room_code_id = r.code
+            JOIN time_slot ts ON s.time_slot_id = ts.code
+            JOIN subject sub ON s.subject_code_id = sub.code
+            WHERE {where_clause}
+            ORDER BY s.day, ts.start_time
+        """
+
+        # Thực thi query
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
+            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        return Response({"data": results})
+    @action(detail=False, methods=["get"], url_path="filtered",permission_classes = [AllowAny])
+    def filter_sessions(self, request, *args, **kwargs):
+        """API 2: Lọc theo học kỳ, lớp, giáo viên hoặc môn học"""
+        semester_code = request.GET.get("semester_code")
+        room_code = request.GET.get("room_code")
+        teacher_id = request.GET.get("teacher_id")
+        subject_code = request.GET.get("subject_code")
+
+        # Kiểm tra ít nhất một tham số được truyền vào
+        if not any([semester_code, room_code, teacher_id, subject_code]):
+            return Response({"error": "At least one filter parameter is required"}, status=400)
+
+        # Xây dựng điều kiện lọc động
+        filters = []
+        params = []
+
+        if semester_code:
+            filters.append("s.semester_code_id = %s")
+            params.append(semester_code)
+        if room_code:
+            filters.append("s.room_code_id = %s")
+            params.append(room_code)
+        if teacher_id:
+            filters.append("s.teacher_id = %s")
+            params.append(teacher_id)
+        if subject_code:
+            filters.append("s.subject_code_id = %s")
+            params.append(subject_code)
+
+        where_clause = " AND ".join(filters)
+
+        # Raw SQL query
+        query = f"""
+            SELECT 
+                s.id, 
+                r.name AS room_name, 
+                ts.start_time || ' - ' || ts.end_time AS time_slot, 
+                sub.name AS subject_name, 
+                s.lesson_name, 
+                s.status
+            FROM session s
+            JOIN room r ON s.room_code_id = r.code
+            JOIN time_slot ts ON s.time_slot_id = ts.code
+            JOIN subject sub ON s.subject_code_id = sub.code
+            WHERE {where_clause}
+            ORDER BY s.day, ts.start_time
+        """
+
+        # Thực thi query
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
+            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        return Response({"data": results})
+    @action(detail=False, methods=['get'], url_path='filtered-status')
+    def filtered_status(self, request):
+        semester_code = request.GET.get('semester_code')
+        room_code = request.GET.get('room_code')
+        teacher_id = request.GET.get('teacher_id')
+        subject_code = request.GET.get('subject_code')
+        status = request.GET.get('status')
+        day = request.GET.get('day')
+
+        # Xây dựng SQL query động
+        query = """
+            SELECT id, status
+            FROM session
+            WHERE 1=1
+        """
+        params = []
+
+        if semester_code:
+            query += " AND semester_code_id = %s"
+            params.append(semester_code)
+
+        if room_code:
+            query += " AND room_code_id = %s"
+            params.append(room_code)
+
+        if teacher_id:
+            query += " AND teacher_id = %s"
+            params.append(teacher_id)
+
+        if subject_code:
+            query += " AND subject_code_id = %s"
+            params.append(subject_code)
+
+        if status is not None:  # Trường boolean có thể là True/False
+            query += " AND status = %s"
+            params.append(status.lower() == 'true')  # Chuyển đổi 'true' -> True, 'false' -> False
+
+        if day:
+            query += " AND day = %s"
+            params.append(day)
+
+        # Thực thi SQL truy vấn
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
+            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        return Response({"data": results})
 
 # Teacher Assignment ViewSet
 class TeacherAssignmentViewSet(viewsets.ModelViewSet):
     queryset = Teacher_assignment.objects.all()
     serializer_class = SessionSerializer
-    @action(detail=False, methods=['get'], url_path='search')
+    permission_classes = [AllowAny]
+    @action(detail=False, methods=['get'], url_path='search',permission_classes = [AllowAny])
     def search_assignments(self, request):
         """
         API: `/api/teacher-assignments/search/`
@@ -108,6 +274,7 @@ class TeacherAssignmentViewSet(viewsets.ModelViewSet):
 
 
 class CheckCurrentSemester(APIView):
+    permission_classes = [AllowAny]
     def get(self, request):
         today = date.today()
         semester = Semester.objects.filter(start_date__lte=today).order_by('-start_date').first()
@@ -206,3 +373,64 @@ class StudentsInRoomView(APIView):
         ]
 
         return Response(students_data)
+    
+class SessionByWeekAPIView(APIView):
+    def get(self, request):
+        # Lấy tham số từ request
+        day = request.GET.get("day")
+        semester_code = request.GET.get("semester_code")
+        room_code = request.GET.get("room_code")
+        teacher_id = request.GET.get("teacher_id")
+        subject_code = request.GET.get("subject_code")
+
+        # Kiểm tra định dạng ngày
+        try:
+            start_date = datetime.strptime(day, "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            return Response({"error": "Invalid date format. Use YYYY-MM-DD"}, status=400)
+
+        end_date = start_date + timedelta(days=6)  # 7 ngày liên tiếp
+
+        # Xây dựng điều kiện lọc động
+        filters = ["s.day BETWEEN %s AND %s"]
+        params = [start_date, end_date]
+
+        if semester_code:
+            filters.append("s.semester_code_id = %s")
+            params.append(semester_code)
+        if room_code:
+            filters.append("s.room_code_id = %s")
+            params.append(room_code)
+        if teacher_id:
+            filters.append("s.teacher_id = %s")
+            params.append(teacher_id)
+        if subject_code:
+            filters.append("s.subject_code_id = %s")
+            params.append(subject_code)
+
+        where_clause = " AND ".join(filters)
+
+        # Raw SQL query
+        query = f"""
+            SELECT 
+                s.id, 
+                r.name AS room_name, 
+                ts.start_time || ' - ' || ts.end_time AS time_slot, 
+                sub.name AS subject_name, 
+                s.lesson_name, 
+                s.status
+            FROM session s
+            JOIN room r ON s.room_code_id = r.code
+            JOIN time_slot ts ON s.time_slot_id = ts.code
+            JOIN subject sub ON s.subject_code_id = sub.code
+            WHERE {where_clause}
+            ORDER BY s.day, ts.start_time
+        """
+
+        # Thực thi query
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
+            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        return Response({"data": results})
