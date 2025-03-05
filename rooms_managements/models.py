@@ -16,19 +16,15 @@ class Seating(models.Model):
 
     class Meta:
         db_table = 'seating'
-        verbose_name = 'Seating Position'
-        verbose_name_plural = 'Seating Positions'
+        verbose_name = 'Seating'
+        verbose_name_plural = 'Seatings'
         unique_together = ('room', 'row', 'column') 
 
     def __str__(self):
          return f"Student {self.student.full_name} in Room {self.room.name} at position ({self.row}, {self.column})"
     
 # class Attendance(models.Model):
-#     STATUS_CHOICES = [
-#         (1, 'Có mặt'),
-#         (2, 'Đi muộn'),
-#         (3, 'Vắng mặt'),
-#     ]   
+
 
 #     user = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE, related_name='attendances')
 #     lesson = models.ForeignKey('adminpanel.Lesson', on_delete=models.CASCADE, related_name='attendances')

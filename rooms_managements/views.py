@@ -1,60 +1,100 @@
-# # from django.shortcuts import render
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from django.db import connection
+from .models import Seating
+from .serializers import SeatingSerializer
+from rest_framework.decorators import action
+from accounts.models import CustomUser
+from rest_framework.permissions import IsAuthenticated
 
-# # # Create your views here.
+class SeatingViewSet(viewsets.ModelViewSet):
+    queryset = Seating.objects.all()
+    serializer_class = SeatingSerializer
+    permission_classes = [IsAuthenticated]
 
+    # Action để hoán đổi chỗ ngồi của 2 học sinh
+    @action(detail=False, methods=['post'])
+    def swap_seats(self, request):
+        user_id_1 = request.data.get('user_id_1')
+        user_id_2 = request.data.get('user_id_2')
 
-# # from rest_framework import viewsets, status
-# # from rest_framework.response import Response
-# # from .models import *
-# # from adminpanel.models import Period, Lesson, Semester
-# # from accounts.models import CustomUser
-# # from .serializers import *
-# # from django.utils import timezone
-# # from django.shortcuts import get_object_or_404
-# # from rest_framework.decorators import action
-# # from datetime import timedelta
-# # from .filters import AttendanceFilter
-# # from django_filters.rest_framework import DjangoFilterBackend
-# # from rest_framework import filters
+        if not user_id_1 or not user_id_2:
+            return Response({'error': 'Both user_id_1 and user_id_2 are required'}, status=status.HTTP_400_BAD_REQUEST)
 
+        try:
+            # Sử dụng raw SQL để lấy thông tin chỗ ngồi của 2 học sinh
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT s.id, s.student_id, s.room_id, s.row, s.column
+                    FROM seating s
+                    JOIN custom_user cu1 ON cu1.user_id = %s AND cu1.id = s.student_id
+                    JOIN custom_user cu2 ON cu2.user_id = %s AND cu2.id = s.student_id
+                    """, [user_id_1, user_id_2])
 
-# # def get_current_lesson(device_id, current_time):
-# #     current_day = current_time.date()
-# #     current_time_value = current_time.time()
-# #     print(current_time_value)
-# #     current_period = Period.objects.filter(
-# #         start_time__lte=current_time_value,
-# #         end_time__gte=current_time_value
-# #     ).first()
-    
-# #     if not current_period:
-# #         print("Không tìm thấy period phù hợp.")
-# #         return None
-# #     else:
-# #         print("Period tìm thấy:", current_period)
-    
-# #     try:
-# #         device = Device.objects.get(device_id=device_id)
-# #         room = device.room
-# #     except Device.DoesNotExist:
-# #         print("Không tìm thấy thiết bị.")
-# #         return None
+                seating_data = cursor.fetchall()
 
-# #     # Tìm học kỳ theo ngày hiện tại
-# #     semester = Semester.objects.filter(day_begin__lte=current_day).order_by('-day_begin').first()
-# #     if semester and current_day <= semester.get_day_end():
-# #         # Tìm lesson theo room, học kỳ, ngày và tiết học
-# #         lesson = Lesson.objects.filter(
-# #             room=room,
-# #             day=current_day,
-# #             period=current_period,
-# #             semester=semester
-# #         ).first()
-# #         print("Lesson tìm thấy:", lesson)
-# #         return lesson
-# #     else:
-# #         print("Không có học kỳ nào hợp lệ cho ngày hiện tại.")
-# #         return None
+            if len(seating_data) != 2:
+                return Response({'error': 'One or both students do not have seating positions'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Hoán đổi vị trí của hai học sinh
+            student_1 = seating_data[0]
+            student_2 = seating_data[1]
+            room_1, row_1, column_1 = student_1[2], student_1[3], student_1[4]
+            room_2, row_2, column_2 = student_2[2], student_2[3], student_2[4]
+
+            # Xóa hai chỗ ngồi hiện tại
+            Seating.objects.filter(student_id=student_1[1]).delete()
+            Seating.objects.filter(student_id=student_2[1]).delete()
+
+            # Tạo lại chỗ ngồi sau khi hoán đổi
+            Seating.objects.create(student_id=student_2[1], room_id=room_1, row=row_1, column=column_1)
+            Seating.objects.create(student_id=student_1[1], room_id=room_2, row=row_2, column=column_2)
+
+            return Response({
+                'message': 'Seats swapped successfully',
+                'student_1_new_position': {'room': room_2, 'row': row_2, 'column': column_2},
+                'student_2_new_position': {'room': room_1, 'row': row_1, 'column': column_1},
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # Action để lấy danh sách học sinh trong phòng
+    @action(detail=False, methods=['get'])
+    def seating_list(self, request):
+        room_name = request.query_params.get('room_name')
+
+        try:
+            # Sử dụng raw SQL để lấy danh sách học sinh trong phòng học
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT s.id, cu.user_id, cu.full_name, cu.image
+                    FROM seating s
+                    JOIN room r ON r.id = s.room_id
+                    JOIN custom_user cu ON cu.id = s.student_id
+                    WHERE r.name = %s
+                    """, [room_name])
+
+                seating_data = cursor.fetchall()
+
+            if not seating_data:
+                return Response({"detail": "Room not found or no seating positions available."}, status=status.HTTP_404_NOT_FOUND)
+
+            # Chuyển dữ liệu thành response với thông tin user_id, fullname, và image của học sinh
+            students = [
+                {
+                    'user_id': row[1],
+                    'fullname': row[2],
+                    'image': row[3]
+                }
+                for row in seating_data
+            ]
+
+            return Response(students, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 # # class AttendanceViewSet(viewsets.ModelViewSet):
 # #     authentication_classes = []
@@ -176,46 +216,3 @@
 # #     def complete(self, request):
 # #         return Response({"message": "Quá trình ghi RFID đã hoàn thành."}, status=status.HTTP_200_OK)
 
-
-# from rest_framework import viewsets
-# from .models import Post, Comment, PostFile
-# from .serializers import PostSerializer, CommentSerializer, PostFileSerializer
-# from rest_framework.parsers import MultiPartParser, FormParser
-# from rest_framework.response import Response
-# from rest_framework import status
-# from rest_framework.decorators import action
-
-# class PostViewSet(viewsets.ModelViewSet):
-#     queryset = Post.objects.all()
-#     serializer_class = PostSerializer
-#     parser_classes = (MultiPartParser, FormParser)
-
-#     def create(self, request, *args, **kwargs):
-#         files_data = request.FILES.getlist('files')
-#         post_data = request.data.copy()
-#         post_data.pop('files', None)  # Remove files from data for post creation
-#         post = Post.objects.create(**post_data)
-        
-#         for file in files_data:
-#             PostFile.objects.create(post=post, file=file)
-
-#         serializer = self.get_serializer(post)
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-# class CommentViewSet(viewsets.ModelViewSet):
-#     queryset = Comment.objects.all()
-#     serializer_class = CommentSerializer
-
-
-# class PostViewSet(viewsets.ModelViewSet):
-#     queryset = Post.objects.all()
-#     serializer_class = PostSerializer
-
-#     @action(detail=True, methods=['post'])
-#     def like(self, request, pk=None):
-#         post = self.get_object()
-#         if request.user in post.likes.all():
-#             post.likes.remove(request.user)
-#         else:
-#             post.likes.add(request.user)
-#         return Response({'likes_count': post.likes.count()})
