@@ -10,6 +10,7 @@ from django.utils.dateparse import parse_date
 from django.db import connection
 from rest_framework.permissions import AllowAny
 from django.conf import settings
+from rest_framework.decorators import action
 
 # Semester ViewSet
 class SemesterViewSet(viewsets.ModelViewSet):
@@ -41,6 +42,69 @@ class SessionViewSet(viewsets.ModelViewSet):
 class TeacherAssignmentViewSet(viewsets.ModelViewSet):
     queryset = Teacher_assignment.objects.all()
     serializer_class = SessionSerializer
+    @action(detail=False, methods=['get'], url_path='search')
+    def search_assignments(self, request):
+        """
+        API: `/api/teacher-assignments/search/`
+        → Lấy thông tin phân công giáo viên theo các tham số truyền lên.
+        """
+        semester_code = request.query_params.get("semester_code")
+        subject_code = request.query_params.get("subject_code")
+        room_code = request.query_params.get("room_code")
+        teacher_id = request.query_params.get("teacher")
+
+        # Điều kiện lọc động
+        filters = []
+        params = []
+        
+        if semester_code:
+            filters.append("ta.semester_code_id = %s")
+            params.append(semester_code)
+        if subject_code:
+            filters.append("ta.subject_code_id = %s")
+            params.append(subject_code)
+        if room_code:
+            filters.append("ta.room_code_id = %s")
+            params.append(room_code)
+        if teacher_id:
+            filters.append("ta.teacher_id = %s")
+            params.append(teacher_id)
+
+        # Xây dựng câu truy vấn SQL tối ưu
+        query = """
+            SELECT 
+                ta.id, 
+                ta.semester_code_id, 
+                s.name AS semester_name,
+                ta.subject_code_id, 
+                sub.name AS subject_name,
+                ta.room_code_id, 
+                r.name AS room_name,
+                ta.teacher_id, 
+                cu.full_name AS teacher_name,
+                cu.image AS teacher_image
+            FROM teacher_assignment ta
+            LEFT JOIN semester s ON ta.semester_code_id = s.code
+            LEFT JOIN subject sub ON ta.subject_code_id = sub.code
+            LEFT JOIN room r ON ta.room_code_id = r.code
+            LEFT JOIN teacher t ON ta.teacher_id = t.user_id
+            LEFT JOIN custom_user cu ON t.user_id = cu.user_id
+        """
+        
+        if filters:
+            query += " WHERE " + " AND ".join(filters)
+
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
+            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        # Xử lý đường dẫn ảnh cho giáo viên
+        for result in results:
+            if result["teacher_image"]:
+                result["teacher_image"] = request.build_absolute_uri(result["teacher_image"])
+
+        return Response(results, status=status.HTTP_200_OK)
 
 
 class CheckCurrentSemester(APIView):
