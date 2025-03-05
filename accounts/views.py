@@ -301,6 +301,30 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             user_data.update(role_data)
         
         return Response({"message": "Cập nhật thành công", "user": user_data})
+    @action(detail=True, methods=['delete'], url_path='delete', permission_classes=[IsAuthenticated])
+    def delete_user(self, request, pk=None):
+        """
+        API: `/api/accounts/users/<user_id>/delete/`
+        → Chỉ Admin mới có thể xóa user.
+        """
+        if request.user.role != "admin":
+            return Response({"error": "Bạn không có quyền xóa user."}, status=403)
+
+        user = get_object_or_404(CustomUser, user_id=pk)
+        
+        # Xóa dữ liệu liên quan từ bảng con
+        role = user.role
+        if role == "student":
+            Student.objects.filter(user=user).delete()
+        elif role == "teacher":
+            Teacher.objects.filter(user=user).delete()
+        elif role == "admin":
+            Admin.objects.filter(user=user).delete()
+
+        # Xóa user chính
+        user.delete()
+
+        return Response({"message": f"User {pk} đã được xóa thành công."}, status=200)
     
 
 
