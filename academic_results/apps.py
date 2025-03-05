@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class DocumentsConfig(AppConfig):
+class AcademicResultsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'Appdocuments'
+    name = 'academic_results'
