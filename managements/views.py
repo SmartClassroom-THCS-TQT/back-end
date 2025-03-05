@@ -202,6 +202,157 @@ class SessionViewSet(viewsets.ModelViewSet):
             results = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
         return Response({"data": results})
+    @action(detail=False, methods=['get'], url_path='filter')
+    def filter_sessions(self, request):
+        """
+        API duy nhất để lọc sessions theo các tham số động từ frontend
+        """
+        # Lấy tất cả các tham số từ query params
+        params = []
+        filters = []
+
+        # Lọc theo ngày (start_date và end_date) nếu có
+        day = request.GET.get("day")
+        if day:
+            try:
+                start_date = datetime.strptime(day, "%Y-%m-%d").date()
+                end_date = start_date + timedelta(days=6)
+                filters.append("s.day BETWEEN %s AND %s")
+                params.extend([start_date, end_date])
+            except (ValueError, TypeError):
+                return Response({"error": "Invalid date format. Use YYYY-MM-DD"}, status=400)
+
+        # Các tham số lọc khác
+        semester_code = request.GET.get("semester_code")
+        room_code = request.GET.get("room_code")
+        teacher_id = request.GET.get("teacher_id")
+        subject_code = request.GET.get("subject_code")
+        status_param = request.GET.get("status")
+
+        # Xây dựng các điều kiện lọc động cho các tham số
+        if semester_code:
+            filters.append("s.semester_code_id = %s")
+            params.append(semester_code)
+        if room_code:
+            filters.append("s.room_code_id = %s")
+            params.append(room_code)
+        if teacher_id:
+            filters.append("s.teacher_id = %s")
+            params.append(teacher_id)
+        if subject_code:
+            filters.append("s.subject_code_id = %s")
+            params.append(subject_code)
+        if status_param is not None:  # Trường hợp Boolean (True/False)
+            filters.append("s.status = %s")
+            params.append(status_param.lower() == 'true')
+
+        # Xây dựng câu lệnh WHERE động
+        where_clause = " AND ".join(filters) if filters else "1=1"  # Nếu không có filters, sử dụng "1=1"
+
+        # SQL query động
+        query = f"""
+            SELECT 
+                s.id, 
+                r.name AS room_name, 
+                ts.start_time || ' - ' || ts.end_time AS time_slot, 
+                sub.name AS subject_name, 
+                s.lesson_name, 
+                s.status
+            FROM session s
+            JOIN room r ON s.room_code_id = r.code
+            JOIN time_slot ts ON s.time_slot_id = ts.code
+            JOIN subject sub ON s.subject_code_id = sub.code
+            WHERE {where_clause}
+            ORDER BY s.day, ts.start_time
+        """
+
+        # Thực thi truy vấn SQL
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
+            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        # Trả về dữ liệu kết quả
+        return Response({"data": results}, status=status.HTTP_200_OK)
+    @action(detail=False, methods=['get'], url_path='filter-orders')
+    def filter_sessions(self, request):
+        """
+        API duy nhất để lọc sessions theo các tham số động từ frontend
+        và chỉ trả về các trường do frontend yêu cầu thông qua tham số `orders`.
+        """
+        # Lấy tham số `orders` từ query params
+        orders = request.GET.get("orders", "").split(",")  # Các trường cần trả về, mặc định là tất cả nếu không có tham số
+
+        # Lấy các tham số lọc
+        params = []
+        filters = []
+
+        # Lọc theo ngày (start_date và end_date) nếu có
+        day = request.GET.get("day")
+        if day:
+            try:
+                start_date = datetime.strptime(day, "%Y-%m-%d").date()
+                end_date = start_date + timedelta(days=6)
+                filters.append("s.day BETWEEN %s AND %s")
+                params.extend([start_date, end_date])
+            except (ValueError, TypeError):
+                return Response({"error": "Invalid date format. Use YYYY-MM-DD"}, status=400)
+
+        # Các tham số lọc khác
+        semester_code = request.GET.get("semester_code")
+        room_code = request.GET.get("room_code")
+        teacher_id = request.GET.get("teacher_id")
+        subject_code = request.GET.get("subject_code")
+        status_param = request.GET.get("status")
+
+        # Xây dựng các điều kiện lọc động cho các tham số
+        if semester_code:
+            filters.append("s.semester_code_id = %s")
+            params.append(semester_code)
+        if room_code:
+            filters.append("s.room_code_id = %s")
+            params.append(room_code)
+        if teacher_id:
+            filters.append("s.teacher_id = %s")
+            params.append(teacher_id)
+        if subject_code:
+            filters.append("s.subject_code_id = %s")
+            params.append(subject_code)
+        if status_param is not None:  # Trường hợp Boolean (True/False)
+            filters.append("s.status = %s")
+            params.append(status_param.lower() == 'true')
+
+        # Xây dựng câu lệnh WHERE động
+        where_clause = " AND ".join(filters) if filters else "1=1"  # Nếu không có filters, sử dụng "1=1"
+
+        # Câu lệnh SELECT động dựa trên `orders`
+        select_fields = ["s.id", "r.name AS room_name", "ts.start_time || ' - ' || ts.end_time AS time_slot", 
+                         "sub.name AS subject_name", "s.lesson_name", "s.status"]
+        
+        if orders:
+            # Chỉ lấy các trường được yêu cầu bởi frontend
+            select_fields = [field for field in select_fields if field.split(' AS ')[-1] in orders]
+
+        # Tạo câu truy vấn SQL
+        query = f"""
+            SELECT 
+                {', '.join(select_fields)}
+            FROM session s
+            JOIN room r ON s.room_code_id = r.code
+            JOIN time_slot ts ON s.time_slot_id = ts.code
+            JOIN subject sub ON s.subject_code_id = sub.code
+            WHERE {where_clause}
+            ORDER BY s.day, ts.start_time
+        """
+
+        # Thực thi truy vấn SQL
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
+            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        # Trả về dữ liệu kết quả
+        return Response({"data": results}, status=status.HTTP_200_OK)
 
 # Teacher Assignment ViewSet
 class TeacherAssignmentViewSet(viewsets.ModelViewSet):
