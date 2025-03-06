@@ -19,6 +19,8 @@ from django.db import connection
 from rest_framework.decorators import api_view
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.conf import settings
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
+
 
 # API lấy token CSRF
 class CSRFTokenView(APIView):
@@ -143,7 +145,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         if not user_data:
             return Response({'error': 'User not found'}, status=404)
 
-        role_data = self.get_role_data(user_data['user_id'], user_data['role'])
+        role_data = self.get_role_data(user_id, user_data['role'])
         if role_data:
             user_data.update(role_data)
         
@@ -205,66 +207,25 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         if not user_data:
             return Response({'error': 'User not found'}, status=404)
 
-        role_data = self.get_role_data(user_data['user_id'], user_data['role'])
+        role_data = self.get_role_data(user_id, user_data['role'])
         if role_data:
             user_data.update(role_data)
         
         return Response(user_data)
 
-    @action(detail=False, methods=['put'], url_path='update', permission_classes=[IsAuthenticated])
-    def update_self(self, request):
-        """
-        API: `/api/accounts/users/update/` → Người dùng tự cập nhật thông tin của chính mình.
-        """
-        return self._update_user(request, request.user, is_admin=False)
 
-    @action(detail=True, methods=['put'], url_path='update', permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['put'], url_path='update', permission_classes=[IsAuthenticated], parser_classes=[JSONParser, MultiPartParser, FormParser])
+    def update_self(self, request):
+        return self._update_user(request, request.user.user_id, is_admin=False)
+
+    @action(detail=True, methods=['put'], url_path='update', permission_classes=[IsAuthenticated], parser_classes=[JSONParser, MultiPartParser, FormParser])
     def update_other(self, request, pk=None):
-        """
-        API: `/api/accounts/users/<user_id>/update/` → Admin cập nhật thông tin của user khác.
-        """
         if request.user.role != "admin":
             return Response({"error": "Bạn không có quyền chỉnh sửa người khác."}, status=403)
 
         user = get_object_or_404(CustomUser, user_id=pk)
-        return self._update_user(request, user, is_admin=True)
+        return self._update_user(request, user.user_id, is_admin=True)
 
-    # def _update_user(self, request, user, is_admin):
-    #     """
-    #     Xử lý cập nhật thông tin user (dùng chung cho self-update và admin-update).
-    #     """
-    #     update_data = request.data.copy()
-
-    #     # Cấm thay đổi user_id và role
-    #     update_data.pop("user_id", None)
-    #     update_data.pop("role", None)
-
-    #     # Cập nhật CustomUser
-    #     user_serializer = CustomUserSerializer(user, data=update_data, partial=True)
-    #     if user_serializer.is_valid():
-    #         user_serializer.save()
-
-    #         # Cập nhật dữ liệu bổ sung của role (Student, Teacher, Admin)
-    #         if hasattr(user, user.role):
-    #             role_instance = getattr(user, user.role)
-    #             role_serializer_class = {
-    #                 'student': StudentSerializer,
-    #                 'teacher': TeacherSerializer,
-    #                 'admin': AdminSerializer
-    #             }.get(user.role)
-
-    #             # Cập nhật dữ liệu riêng của Student, Teacher, Admin
-    #             role_fields = [f.name for f in role_instance._meta.fields]
-    #             extra_data = {k: v for k, v in update_data.items() if k in role_fields}
-
-    #             if extra_data:
-    #                 role_serializer = role_serializer_class(role_instance, data=extra_data, partial=True)
-    #                 if role_serializer.is_valid():
-    #                     role_serializer.save()
-
-    #         return Response({"message": "Cập nhật thành công", "user": user_serializer.data})
-
-    #     return Response(user_serializer.errors, status=400)
     def _update_user(self, request, user_id, is_admin):
         """
         Xử lý cập nhật thông tin user (dùng chung cho self-update và admin-update).
@@ -275,32 +236,34 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         update_data.pop("user_id", None)
         update_data.pop("role", None)
 
+        # Lấy thông tin user
+        user = get_object_or_404(CustomUser, user_id=user_id)
+
         # Xử lý ảnh đại diện nếu có
         image = request.FILES.get('image')
         if image:
-            update_data['image'] = image
+            user.image = image  # Lưu ảnh trực tiếp qua model
 
-        # Cập nhật CustomUser
-        with connection.cursor() as cursor:
-            set_clause = ", ".join([f"{key} = %s" for key in update_data.keys()])
-            values = list(update_data.values()) + [user_id]
-            cursor.execute(f"""
-                UPDATE custom_user
-                SET {set_clause}
-                WHERE user_id = %s
-            """, values)
-        
+        # Cập nhật các trường còn lại
+        for key, value in update_data.items():
+            setattr(user, key, value)
+
+        user.save()
+
         # Lấy thông tin user sau cập nhật
         user_data = self.get_user_data(user_id)
         if not user_data:
             return Response({'error': 'User not found'}, status=404)
 
         # Cập nhật thông tin role nếu có
-        role_data = self.get_role_data(user_id, user_data['role'], update_data)
+        role_data = self.get_role_data(user_id, user_data['role'])
         if role_data:
             user_data.update(role_data)
-        
+
         return Response({"message": "Cập nhật thành công", "user": user_data})
+
+    
+
     @action(detail=True, methods=['delete'], url_path='delete', permission_classes=[IsAuthenticated])
     def delete_user(self, request, pk=None):
         """
