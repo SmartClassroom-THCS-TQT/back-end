@@ -392,7 +392,6 @@ class TeacherAssignmentViewSet(viewsets.ModelViewSet):
             SELECT 
                 ta.id, 
                 ta.semester_code_id, 
-                s.name AS semester_name,
                 ta.subject_code_id, 
                 sub.name AS subject_name,
                 ta.room_code_id, 

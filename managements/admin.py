@@ -54,7 +54,6 @@ class SessionAdmin(admin.ModelAdmin):
 class TeacherAssignmentAdmin(admin.ModelAdmin):
     list_display = ('teacher', 'subject_code', 'semester_code', 'room_code')
     search_fields = ('teacher__user_id', 'subject_code__name', 'semester_code__code', 'room_code__name')
-    readonly_fields = ('semester_code', 'subject_code', 'room_code', 'teacher')  # These fields are assigned and shouldn't be edited
 
 # Register all models with their respective admin
 admin.site.register(Room, RoomAdmin)
