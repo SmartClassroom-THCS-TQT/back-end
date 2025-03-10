@@ -17,7 +17,6 @@ from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
 from django.db import connection
 from rest_framework.decorators import api_view
-from rest_framework.parsers import MultiPartParser, FormParser
 from django.conf import settings
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 
@@ -61,7 +60,8 @@ class ApiLoginView(APIView):
 class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
-    @action(detail=False, methods=['post'], url_path='register', permission_classes=[AllowAny])
+    parser_classes = [MultiPartParser, FormParser,JSONParser]
+    # @action(detail=False, methods=['post'], url_path='register', permission_classes=[AllowAny])
     @action(detail=False, methods=['post'], url_path='register', permission_classes=[AllowAny])
     def register(self, request):
         # Validate CustomUserSerializer
@@ -113,7 +113,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             'student': StudentSerializer
         }
         extra_fields = {key: request.data.get(key) for key in request.data if key not in ['user_id', 'role', 'email', 'phone_number']}
-        extra_fields['user'] = user.user_id  # Truyền ID thay vì object
+        extra_fields['user'] = user.user_id  
 
         related_serializer = role_serializers[role](data=extra_fields)
         if related_serializer.is_valid():
@@ -131,8 +131,6 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
-    parser_classes = [MultiPartParser, FormParser]  # Để hỗ trợ upload ảnh
-
     @action(detail=False, methods=['get'], url_path='detail', permission_classes=[IsAuthenticated])
     def my_detail(self, request):
         """
@@ -145,7 +143,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         if not user_data:
             return Response({'error': 'User not found'}, status=404)
 
-        role_data = self.get_role_data(user_id, user_data['role'])
+        role_data = self.get_role_data(user.user_id)
         if role_data:
             user_data.update(role_data)
         
