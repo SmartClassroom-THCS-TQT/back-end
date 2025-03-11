@@ -24,7 +24,7 @@ class RoomViewSet(viewsets.ModelViewSet):
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['semester_code', 'room_code', 'teacher']
+    filterset_fields = ['code', 'semesters', 'manager__user']
 
 
 # Subject ViewSet
@@ -50,10 +50,10 @@ class SessionViewSet(viewsets.ModelViewSet):
 # Teacher Assignment ViewSet
 class TeacherAssignmentViewSet(viewsets.ModelViewSet):
     queryset = Teacher_assignment.objects.all()
-    serializer_class = SessionSerializer
+    serializer_class = TeacherAssignmentSerializer
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['semester_code', 'room_code', 'teacher', 'subject_code']
+    filterset_fields = ['semester_code__code', 'subject_code__code', 'room_code__code', 'teacher__user']
 
 class CheckCurrentSemester(APIView):
     permission_classes = [AllowAny]

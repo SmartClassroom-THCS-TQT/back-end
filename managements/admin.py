@@ -10,8 +10,7 @@ class RoomAdmin(admin.ModelAdmin):
         return obj.get_capacity()
     student_count.short_description = 'Number of Students'
     def semesters_list(self, obj):
-        # Lấy danh sách các học kỳ liên kết với phòng học (chuyển thành chuỗi nếu cần)
-        return ", ".join([semester.name for semester in obj.semesters.all()])
+        return ", ".join([str(semester.code) for semester in obj.semesters.all()])
     
     semesters_list.short_description = 'Semesters'
 
