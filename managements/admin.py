@@ -4,11 +4,16 @@ from .models import Room, Semester, Subject, Time_slot, Session, Teacher_assignm
 # Admin for Room model
 
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'manager', 'student_count')
+    list_display = ('semesters_list','code', 'name', 'manager', 'student_count')
 
     def student_count(self, obj):
         return obj.get_capacity()
     student_count.short_description = 'Number of Students'
+    def semesters_list(self, obj):
+        # Lấy danh sách các học kỳ liên kết với phòng học (chuyển thành chuỗi nếu cần)
+        return ", ".join([semester.name for semester in obj.semesters.all()])
+    
+    semesters_list.short_description = 'Semesters'
 
 
 class SemesterAdmin(admin.ModelAdmin):

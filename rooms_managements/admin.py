@@ -1,13 +1,13 @@
 from django.contrib import admin
-from .models import Seating
-
+from .models import *
+from django.utils.translation import gettext_lazy as _
 # Register your models here.
 class SeatingAdmin(admin.ModelAdmin):
     # Hiển thị các trường cần thiết trong danh sách quản lý
     list_display = ('student', 'room', 'row', 'column')
 
     # Cho phép tìm kiếm theo trường student và room
-    search_fields = ('student__full_name', 'room__name')
+    search_fields = ('Student__user_full_name', 'room__name')
 
     # Bộ lọc theo phòng (room) và hàng (row)
     list_filter = ('room', 'row')
@@ -35,3 +35,15 @@ class SeatingAdmin(admin.ModelAdmin):
 
 # Đăng ký mô hình với admin
 admin.site.register(Seating, SeatingAdmin)
+
+# Đăng ký mô hình Attendance
+class AttendanceAdmin(admin.ModelAdmin):
+    list_display = ('student', 'session', 'status', 'attendance_time')  # Hiển thị các trường trong danh sách
+    search_fields = ('student__user__full_name', 'session_lesson_name')  # Tìm kiếm theo tên sinh viên và môn học
+    list_filter = ('status', 'session')  # Bộ lọc theo trạng thái điểm danh và phiên học
+    ordering = ('-attendance_time',)  # Sắp xếp theo thời gian điểm danh (mới nhất trước)
+
+    def status_display(self, obj):
+        return "Có mặt" if obj.status else "Vắng mặt"
+    status_display.short_description = _("Status")
+admin.site.register(Attendance, AttendanceAdmin)

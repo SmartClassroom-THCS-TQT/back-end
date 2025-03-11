@@ -7,8 +7,9 @@ from accounts.models import Student
 
 
 class Room (models.Model):
-    code = models.CharField(max_length=10, primary_key=True)
-
+    code = models.CharField(max_length=10, primary_key=True, auto_created=True)  # Mã phòng học
+    
+    semesters = models.ManyToManyField('Semester', related_name='rooms', blank=True)
     name = models.CharField(max_length=255)
     manager = models.ForeignKey('accounts.Teacher', on_delete=models.CASCADE, related_name='rooms', null=True, blank=True)
     def get_students(self):

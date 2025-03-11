@@ -143,7 +143,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         if not user_data:
             return Response({'error': 'User not found'}, status=404)
 
-        role_data = self.get_role_data(user.user_id)
+        role_data = self.get_role_data(user.user_id,user_data['role'])
         if role_data:
             user_data.update(role_data)
         

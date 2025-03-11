@@ -1,22 +1,51 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
+from django.contrib.auth.models import Group
 
+# class CustomUserManager(BaseUserManager):
+#     def create_user(self, user_id, role, password=None, **extra_fields):
+#         if not user_id:
+#             raise ValueError('models messenger: User ID is required')
+#         if not role:
+#             raise ValueError('models messenger: Role is required')
+
+#         extra_fields.setdefault("is_active", True)
+
+#         user = self.model(user_id=user_id, role=role, **extra_fields)
+#         user.set_password(password or user_id)  
+#         user.save(using=self._db)
+#         return user
+
+
+#     def create_superuser(self, user_id, role='admin', password=None, **extra_fields):
+#         extra_fields.setdefault('is_staff', True)
+#         extra_fields.setdefault('is_superuser', True)
+        
+#         if extra_fields.get('is_staff') is not True:
+#             raise ValueError('Superuser must have is_staff=True.')
+#         if extra_fields.get('is_superuser') is not True:
+#             raise ValueError('Superuser must have is_superuser=True.')
+        
+#         superuser = self.model(user_id=user_id, role=role, **extra_fields)
+#         superuser.set_password(password)
+#         superuser.save(using=self._db)
+#         return superuser
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, user_id, role, password=None, **extra_fields):
         if not user_id:
-            raise ValueError('models messenger: User ID is required')
+            raise ValueError('User ID is required')
         if not role:
-            raise ValueError('models messenger: Role is required')
+            raise ValueError('Role is required')
 
         extra_fields.setdefault("is_active", True)
 
         user = self.model(user_id=user_id, role=role, **extra_fields)
-        user.set_password(password or user_id)  
+        user.set_password(password or user_id)  # Set password
         user.save(using=self._db)
-        return user
 
+        return user
 
     def create_superuser(self, user_id, role='admin', password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
@@ -30,7 +59,9 @@ class CustomUserManager(BaseUserManager):
         superuser = self.model(user_id=user_id, role=role, **extra_fields)
         superuser.set_password(password)
         superuser.save(using=self._db)
+
         return superuser
+
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
