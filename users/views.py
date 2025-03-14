@@ -124,8 +124,8 @@ class AccountViewSet(viewsets.ModelViewSet):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer 
     parser_classes = [MultiPartParser, FormParser,JSONParser]
-    permission_classes = [IsAuthenticated]
-    authenticate_classes = [JWTAuthentication]
+    permission_classes = [AllowAny]
+    authenticate_classes = [AllowAny]
 
     # @action(detail=False, methods=['post'], url_path='register', permission_classes=[AllowAny])
     # @csrf_exempt
@@ -194,7 +194,7 @@ class AccountViewSet(viewsets.ModelViewSet):
 
 
 class ChangePasswordView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         user = request.user
@@ -222,7 +222,7 @@ class ChangePasswordView(APIView):
 
 
 class ResetPasswordByAdminView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         if request.user.role != "admin":
@@ -247,7 +247,7 @@ class ResetPasswordByAdminView(APIView):
 class StudentViewSet(viewsets.ModelViewSet):
     queryset = Student.objects.select_related('account', 'classroom').all()
     serializer_class = StudentSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser,JSONParser]
     search_fields = ['full_name', 'account__user_id', 'classroom__id']
     ordering_fields = '__all__'
@@ -256,7 +256,7 @@ class StudentViewSet(viewsets.ModelViewSet):
 class TeacherViewSet(viewsets.ModelViewSet):
     queryset = Teacher.objects.select_related('account').all()
     serializer_class = TeacherSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser,JSONParser]
     search_fields = ['full_name', 'account__user_id', 'phone_number']
     ordering_fields = '__all__'
@@ -264,7 +264,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
 class AdminViewSet(viewsets.ModelViewSet):
     queryset = Admin.objects.select_related('account').all()
     serializer_class = AdminSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser,JSONParser]
     search_fields = ['full_name', 'account__user_id', 'phone_number']
     ordering_fields = '__all__'
