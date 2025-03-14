@@ -16,11 +16,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 # Semester ViewSet
 class SemesterViewSet(viewsets.ModelViewSet):
+    permission_classes = [AllowAny]
     queryset = Semester.objects.all()
     serializer_class = SemesterSerializer
 
 # Room ViewSet
 class RoomViewSet(viewsets.ModelViewSet):
+    permission_classes = [AllowAny]
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
     filter_backends = [DjangoFilterBackend]
@@ -29,12 +31,14 @@ class RoomViewSet(viewsets.ModelViewSet):
 
 # Subject ViewSet
 class SubjectViewSet(viewsets.ModelViewSet):
+    permission_classes = [AllowAny]
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
 
 
 # Time Slot ViewSet
 class TimeSlotViewSet(viewsets.ModelViewSet):
+    permission_classes = [AllowAny]
     queryset = Time_slot.objects.all()
     serializer_class = ClassTimeSerializer
 
