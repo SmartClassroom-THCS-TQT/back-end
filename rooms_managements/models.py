@@ -2,7 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 class Seating(models.Model):
     student = models.OneToOneField(
-        'accounts.Student', 
+        'users.Student', 
         primary_key=True,
         on_delete=models.CASCADE, 
         related_name='seating'
@@ -25,7 +25,7 @@ class Seating(models.Model):
          return f"Student {self.student.user.full_name} in Room {self.room.name} at position ({self.row}, {self.column})"
     
 class Attendance(models.Model):
-    student = models.ForeignKey('accounts.Student', on_delete=models.CASCADE, related_name='attendances')
+    student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='attendances')
     session = models.ForeignKey('managements.Session', on_delete=models.CASCADE, related_name='attendances')
     status = models.BooleanField(null=True, blank=True)
     attendance_time = models.DateTimeField(auto_now_add=True)  

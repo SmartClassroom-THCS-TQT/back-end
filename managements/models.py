@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 from django.db import models
 from datetime import timedelta, date
-from accounts.models import Student
+from users.models import Student
 
 
 class Room (models.Model):
@@ -11,7 +11,7 @@ class Room (models.Model):
     
     semesters = models.ManyToManyField('Semester', related_name='rooms', blank=True)
     name = models.CharField(max_length=255)
-    manager = models.ForeignKey('accounts.Teacher', on_delete=models.CASCADE, related_name='rooms', null=True, blank=True)
+    manager = models.ForeignKey('users.Teacher', on_delete=models.CASCADE, related_name='rooms', null=True, blank=True)
     def get_students(self):
         return Student.objects.filter(classroom=self)
     def get_capacity(self):
@@ -103,7 +103,7 @@ class Session(models.Model):
     day = models.DateField()  # Session day
     time_slot = models.ForeignKey(Time_slot, on_delete=models.CASCADE)  # Session time
 
-    teacher = models.ForeignKey('accounts.Teacher', on_delete=models.CASCADE,related_name='sessions', null=True , blank=True)  # Teacher teaching the lesson
+    teacher = models.ForeignKey('users.Teacher', on_delete=models.CASCADE,related_name='sessions', null=True , blank=True)  # Teacher teaching the lesson
     lesson_number = models.IntegerField()  # Lesson number
     lesson_name = models.CharField(max_length=255)
     detail = models.TextField(blank=True, null=True)  
@@ -127,7 +127,7 @@ class Teacher_assignment(models.Model):
     subject_code = models.ForeignKey(Subject, on_delete=models.CASCADE,related_name='teacher_assignment')  # Subject of the assignment
     room_code = models.ForeignKey(Room, on_delete=models.CASCADE,related_name='teacher_assignment')  # Room where the lesson is taught
 
-    teacher = models.ForeignKey('accounts.Teacher', on_delete=models.CASCADE, related_name='teacher_assignment')  # Teacher of the assignment
+    teacher = models.ForeignKey('users.Teacher', on_delete=models.CASCADE, related_name='teacher_assignment')  # Teacher of the assignment
 
     def __str__(self):
         return f"{self.semester_code} - {self.subject_code} - {self.room_code} - {self.teacher}"

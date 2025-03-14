@@ -4,7 +4,7 @@ from django.db import connection
 from .models import Seating
 from .serializers import SeatingSerializer
 from rest_framework.decorators import action
-from accounts.models import CustomUser
+from users.models import Account
 from rest_framework.permissions import IsAuthenticated
 
 class SeatingViewSet(viewsets.ModelViewSet):
@@ -116,7 +116,7 @@ class SeatingViewSet(viewsets.ModelViewSet):
 # #             lesson = get_current_lesson(device_id, current_time)
             
 # #             if lesson:
-# #                 user = get_object_or_404(CustomUser, user_id=user_id)
+# #                 user = get_object_or_404(Account, user_id=user_id)
 # #                 if Attendance.objects.filter(user=user, lesson=lesson).exists():
 # #                     return Response({"error": "Thông tin điểm danh đã tồn tại."}, status=status.HTTP_400_BAD_REQUEST)
 

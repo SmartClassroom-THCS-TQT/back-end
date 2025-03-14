@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'accounts',
+    'users',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'managements',
@@ -93,15 +93,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 
-# Database - db.sqlite3
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 
 
 #database - postgres
@@ -163,7 +154,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'accounts.customuser'
+AUTH_USER_MODEL = 'users.account'
 
 
 REST_FRAMEWORK = {
@@ -172,13 +163,14 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.JSONParser',
-        # 'rest_framework.parsers.MultiPartParser',
-        # 'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+        'rest_framework.parsers.FormParser',
     ),
      'DEFAULT_AUTHENTICATION_CLASSES': (
-         'rest_framework_simplejwt.authentication.JWTAuthentication',  # JWT Authentication
-        'rest_framework.authentication.SessionAuthentication',  # Session Authentication
-        'rest_framework.authentication.BasicAuthentication',  # Basic Auth
+        #  Mặc định kh yêu cầu xác thực, yêu cầu xác thực riêng biệt cho từng view
+        #  'rest_framework_simplejwt.authentication.JWTAuthentication',  # JWT Authentication
+        # 'rest_framework.authentication.SessionAuthentication',  # Session Authentication
+        # 'rest_framework.authentication.BasicAuthentication',  # Basic Auth
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -188,7 +180,7 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'USER_ID_FIELD': 'user_id',  # Sử dụng 'user_id' thay vì 'id'
     'USER_ID_CLAIM': 'user_id',  # ghi `user_id` vào trong token
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=365 * 100),  # Thời gian sống của access token
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=2),  # Thời gian sống của access token
     'REFRESH_TOKEN_LIFETIME': timedelta(days=365 * 100),    # Thời gian sống của refresh token
     'ROTATE_REFRESH_TOKENS': False,                # Tùy chọn làm mới refresh token khi làm mới access token
     'BLACKLIST_AFTER_ROTATION': False,             # Có nên đưa refresh token vào blacklist sau khi bị làm mới

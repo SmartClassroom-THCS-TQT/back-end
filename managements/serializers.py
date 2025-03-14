@@ -1,7 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from .models import *
-from accounts.models import Student,Teacher
+from users.models import Student,Teacher
 
 class ManagerSerializer(serializers.ModelSerializer):
     user_id = serializers.CharField(source='user.user_id')  # ✅ Lấy user_id từ CustomUser
