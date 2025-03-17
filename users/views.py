@@ -153,10 +153,7 @@ class ChangePasswordView(APIView):
 
 class ResetPasswordByAdminView(APIView):
     permission_classes = [AllowAny]
-
     def post(self, request):
-        if request.user.role != "admin":
-            return Response({"error": "Bạn không có quyền thực hiện hành động này."}, status=status.HTTP_403_FORBIDDEN)
 
         user_id = request.data.get("user_id")
         if not user_id:
