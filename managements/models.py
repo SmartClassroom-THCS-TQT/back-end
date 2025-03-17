@@ -25,7 +25,7 @@ class Room (models.Model):
     def get_capacity(self):
         return self.students.count()  # Trả về số học sinh trong phòng học
     def __str__(self):
-        return f"{self.name} - {self.code}"
+        return f"{self.name} - {self.id}"
     class Meta:
         db_table = 'room'
         verbose_name = 'Room'

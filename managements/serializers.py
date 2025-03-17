@@ -11,6 +11,11 @@ class ManagerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
         fields = ['user_id', 'full_name', 'image']  # ✅ Trả về object chứa 3 trường này
+
+class AcademicYearSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AcademicYear
+        fields = '__all__'
  
 class SemesterSerializer(serializers.ModelSerializer):
     class Meta:

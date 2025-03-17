@@ -14,11 +14,23 @@ from rest_framework.decorators import action
 from datetime import datetime, timedelta
 from django_filters.rest_framework import DjangoFilterBackend
 
+# Academic Year ViewSet
+class AcademicYearViewSet(viewsets.ModelViewSet):
+    permission_classes = [AllowAny]
+    queryset = AcademicYear.objects.all()
+    serializer_class = AcademicYearSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['year_name']
+    ordering_fields = '__all__'
+
 # Semester ViewSet
 class SemesterViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     queryset = Semester.objects.all()
     serializer_class = SemesterSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['code', 'academic_year__year_name']
+    ordering_fields = '__all__'
 
 # Room ViewSet
 class RoomViewSet(viewsets.ModelViewSet):
@@ -27,6 +39,7 @@ class RoomViewSet(viewsets.ModelViewSet):
     serializer_class = RoomSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'academic_year', 'manager__account']
+    ordering_fields = '__all__'
 
 
 # Subject ViewSet
@@ -34,6 +47,9 @@ class SubjectViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['code', 'name']
+    ordering_fields = '__all__'
 
 
 # Time Slot ViewSet
@@ -41,6 +57,9 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     queryset = Time_slot.objects.all()
     serializer_class = ClassTimeSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['code', 'start_time', 'end_time']
+    ordering_fields = '__all__'
 
 # Session ViewSet
 class SessionViewSet(viewsets.ModelViewSet):
@@ -49,6 +68,7 @@ class SessionViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['semester_code', 'room_id', 'teacher', 'subject_code']
+    ordering_fields = '__all__'
     
 
 # Teacher Assignment ViewSet
@@ -58,6 +78,7 @@ class TeacherAssignmentViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['semester_code__code', 'subject_code__code', 'room_id', 'teacher__account']
+    ordering_fields = '__all__'
 
 class CheckCurrentSemester(APIView):
     permission_classes = [AllowAny]
