@@ -38,7 +38,7 @@ class RoomViewSet(viewsets.ModelViewSet):
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'academic_year', 'manager__account']
+    filterset_fields = ['id', 'academic_year__year_name', 'manager__account']
     ordering_fields = '__all__'
 
 

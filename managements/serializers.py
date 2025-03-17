@@ -4,10 +4,7 @@ from .models import *
 from users.models import Student,Teacher
 
 class ManagerSerializer(serializers.ModelSerializer):
-    user_id = serializers.CharField(source='user.user_id')  # ✅ Lấy user_id từ CustomUser
-    full_name = serializers.CharField(source='user.full_name')  # ✅ Lấy full_name từ CustomUser
-    image = serializers.ImageField(source='user.image')  # ✅ Lấy ảnh từ CustomUser
-
+    user_id = serializers.CharField(source='account.user_id')  # ✅ Lấy user_id từ CustomUser
     class Meta:
         model = Teacher
         fields = ['user_id', 'full_name', 'image']  # ✅ Trả về object chứa 3 trường này
