@@ -6,18 +6,35 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 
 class AccountAdmin(admin.ModelAdmin):
-    list_display = ('user_id', 'email', 'role', 'is_active', 'is_staff', 'is_superuser', 'date_joined', 'last_login')
-    search_fields = ('user_id', 'email', 'role')
+    list_display = ('user_id', 'username', 'role', 'is_active', 'is_staff', 'is_superuser')
+    search_fields = ('user_id', 'username', 'role')
     list_filter = ('role', 'is_active', 'is_staff', 'is_superuser')
-    ordering = ['email']
+    ordering = ['username']
 
+    # Chỉ định các trường chỉ đọc
+    readonly_fields = ('user_id',)
+
+    # Sử dụng fieldsets để nhóm các trường (loại bỏ user_id khỏi fields)
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('username', 'role')
+        }),
+        ('Trạng thái', {
+            'fields': ('is_active', 'is_staff', 'is_superuser')
+        }),
+        ('Quyền và Nhóm', {  # Thêm phần mới cho Group và Permission
+            'fields': ('groups', 'user_permissions'),
+            'classes': ('collapse',)  # Thu gọn phần này (tùy chọn)
+        }),
+    )
+    filter_horizontal = ('groups', 'user_permissions')
 
 admin.site.register(Account, AccountAdmin)
 
 # TeacherAdmin
 class TeacherAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'get_teacher_id', 'phone_number', 'sex', 'day_of_birth', 'nation', 'active_status', 'contract_types', 'expertise_levels')
-    search_fields = ('full_name', 'phone_number', 'sex', 'nation', 'active_status')
+    list_display = ('full_name','email', 'get_teacher_id', 'phone_number', 'sex', 'day_of_birth', 'nation', 'active_status', 'contract_types', 'expertise_levels')
+    search_fields = ('full_name','email', 'phone_number', 'sex', 'nation', 'active_status')
     list_filter = ('active_status', 'sex', 'nation')
     ordering = ['full_name']
     
@@ -31,8 +48,8 @@ admin.site.register(Teacher, TeacherAdmin)
 
 # AdminAdmin
 class AdminAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'get_admin_id', 'phone_number', 'sex', 'day_of_birth', 'nation', 'active_status', 'contract_types', 'expertise_levels', 'description')
-    search_fields = ('full_name', 'phone_number', 'sex', 'nation', 'active_status')
+    list_display = ('full_name', 'email','get_admin_id', 'phone_number', 'sex', 'day_of_birth', 'nation', 'active_status', 'contract_types', 'expertise_levels', 'description')
+    search_fields = ('full_name','email', 'phone_number', 'sex', 'nation', 'active_status')
     list_filter = ('active_status', 'sex', 'nation')
     ordering = ['full_name']
   
@@ -46,9 +63,9 @@ admin.site.register(Admin, AdminAdmin)
 
 # StudentAdmin
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'get_student_id', 'phone_number', 'classroom', 'sex', 'day_of_birth', 'nation', 'active_status')
-    search_fields = ('full_name', 'phone_number', 'sex', 'nation', 'active_status')
-    list_filter = ('active_status', 'sex', 'nation', 'classroom')
+    list_display = ('full_name', 'email','get_student_id', 'phone_number', 'room', 'sex', 'day_of_birth', 'nation', 'active_status')
+    search_fields = ('full_name', 'email','phone_number', 'sex', 'nation', 'active_status')
+    list_filter = ('active_status', 'sex', 'nation', 'room')
     ordering = ['full_name']
     
 

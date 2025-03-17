@@ -3,6 +3,7 @@ from .models import Teacher, Admin, Student
 
 class TeacherFilter(django_filters.FilterSet):
     user_id = django_filters.CharFilter(field_name='user__user_id', lookup_expr='icontains')  # Lọc theo user_id của CustomUser
+    email = django_filters.CharFilter(field_name='user__email', lookup_expr='icontains')  # Lọc theo email của CustomUser
     full_name = django_filters.CharFilter(field_name='user__full_name', lookup_expr='icontains')  # Lọc theo full_name của CustomUser
     active_status = django_filters.CharFilter(field_name='active_status', lookup_expr='icontains')
     phone_number = django_filters.CharFilter(field_name='phone_number', lookup_expr='icontains')
@@ -14,11 +15,12 @@ class TeacherFilter(django_filters.FilterSet):
 
     class Meta:
         model = Teacher
-        fields = ['user_id', 'full_name', 'active_status', 'phone_number', 'sex', 'nation', 'contract_types', 'expertise_levels', 'subjects']
+        fields = ['user_id','email' ,'full_name', 'active_status', 'phone_number', 'sex', 'nation', 'contract_types', 'expertise_levels', 'subjects']
 
 
 class AdminFilter(django_filters.FilterSet):
     user_id = django_filters.CharFilter(field_name='user__user_id', lookup_expr='icontains')  # Lọc theo user_id của CustomUser
+    email = django_filters.CharFilter(field_name='email', lookup_expr='icontains')  # Lọc theo email của CustomUser
     full_name = django_filters.CharFilter(field_name='user__full_name', lookup_expr='icontains')  # Lọc theo full_name của CustomUser
     active_status = django_filters.CharFilter(field_name='active_status', lookup_expr='icontains')
     phone_number = django_filters.CharFilter(field_name='phone_number', lookup_expr='icontains')
@@ -30,11 +32,12 @@ class AdminFilter(django_filters.FilterSet):
 
     class Meta:
         model = Admin
-        fields = ['user_id', 'full_name', 'active_status', 'phone_number', 'sex', 'nation', 'contract_types', 'expertise_levels', 'description']
+        fields = ['user_id', 'email', 'full_name', 'active_status', 'phone_number', 'sex', 'nation', 'contract_types', 'expertise_levels', 'description']
 
 
 class StudentFilter(django_filters.FilterSet):
     user_id = django_filters.CharFilter(field_name='user__user_id', lookup_expr='icontains')  # Lọc theo user_id của CustomUser
+    email = django_filters.CharFilter(field_name='email', lookup_expr='icontains')  # Lọc theo email của CustomUser
     full_name = django_filters.CharFilter(field_name='user__full_name', lookup_expr='icontains')  # Lọc theo full_name của CustomUser
     active_status = django_filters.CharFilter(field_name='active_status', lookup_expr='icontains')
     phone_number = django_filters.CharFilter(field_name='phone_number', lookup_expr='icontains')
@@ -44,4 +47,4 @@ class StudentFilter(django_filters.FilterSet):
 
     class Meta:
         model = Student
-        fields = ['user_id', 'full_name', 'active_status', 'phone_number', 'sex', 'nation', 'classroom']
+        fields = ['user_id', 'email', 'full_name', 'active_status', 'phone_number', 'sex', 'nation', 'classroom']

@@ -15,7 +15,7 @@ class ManagerSerializer(serializers.ModelSerializer):
 class SemesterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Semester
-        fields = ['code', 'start_date', 'weeks_count', 'end_date']
+        fields = ['academic_year','code', 'start_date', 'weeks_count', 'end_date']
 
 class RoomSerializer(serializers.ModelSerializer):
     manager = ManagerSerializer(read_only=True)

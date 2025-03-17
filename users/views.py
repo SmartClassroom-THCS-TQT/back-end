@@ -18,7 +18,7 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
+from django_filters.rest_framework import DjangoFilterBackend
 
 # API lấy token CSRF
 class CSRFTokenView(APIView):
@@ -78,8 +78,8 @@ class RegisterView(APIView):
         existing_fields = {}
         if Account.objects.filter(user_id=user_data['user_id']).exists():
             existing_fields["already_exists_user_id"] = [user_data['user_id']]
-        if user_data.get('email') and Account.objects.filter(email=user_data['email']).exists():
-            existing_fields["already_exists_email"] = [user_data['email']]
+        if user_data.get('usrename') and Account.objects.filter(username=user_data['username']).exists():
+            existing_fields["already_exists_username"] = [user_data['username']]
         
         
         if existing_fields:
@@ -88,9 +88,9 @@ class RegisterView(APIView):
         # Tạo Account
         user = Account.objects.create_user(
             user_id=user_data['user_id'],
+            username=user_data['username'],
             role=role,
             password=user_data['user_id'], 
-            email=user_data.get('email'),
             is_active=True,
             is_staff=(False),
             is_superuser=(False),
@@ -121,78 +121,6 @@ class RegisterView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
-
-class AccountViewSet(viewsets.ModelViewSet):
-    queryset = Account.objects.all()
-    serializer_class = AccountSerializer 
-    parser_classes = [MultiPartParser, FormParser,JSONParser]
-    permission_classes = [AllowAny]
-    authenticate_classes = [AllowAny]
-
-    # @action(detail=False, methods=['post'], url_path='register', permission_classes=[AllowAny])
-    # @csrf_exempt
-    # def register(self, request):
-    #     # Validate AccountSerializer
-    #     user_serializer = AccountSerializer(data=request.data)
-    #     if not user_serializer.is_valid():
-    #         return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    #     # Lấy dữ liệu đã xác thực từ serializer
-    #     user_data = user_serializer.validated_data
-    #     role = user_data.get('role')
-    #     VALID_ROLES = {'student', 'teacher', 'admin'}
-    #     if role not in VALID_ROLES:
-    #         return Response({"error": "Invalid role provided."}, status=status.HTTP_400_BAD_REQUEST)
-
-    #     # Kiểm tra sự tồn tại của user_id, email, phone_number
-    #     existing_fields = {}
-    #     if Account.objects.filter(user_id=user_data['user_id']).exists():
-    #         existing_fields["already_exists_user_id"] = [user_data['user_id']]
-    #     if user_data.get('email') and Account.objects.filter(email=user_data['email']).exists():
-    #         existing_fields["already_exists_email"] = [user_data['email']]
-        
-        
-    #     if existing_fields:
-    #         return Response(existing_fields, status=status.HTTP_400_BAD_REQUEST)
-        
-    #     # Tạo Account
-    #     user = Account.objects.create_user(
-    #         user_id=user_data['user_id'],
-    #         role=role,
-    #         password=user_data['user_id'], 
-    #         email=user_data.get('email'),
-    #         is_active=True,
-    #         is_staff=(False),
-    #         is_superuser=(False),
-    #         date_joined=timezone.now()
-    #     )
-        
-    #     # Chọn serializer phù hợp theo role
-    #     role_serializers = {
-    #         'teacher': TeacherSerializer,
-    #         'admin': AdminSerializer,
-    #         'student': StudentSerializer
-    #     }
-    #     extra_fields = {key: request.data.get(key) for key in request.data if key not in ['user_id', 'role', 'email']}
-    #     extra_fields['account'] = user.user_id  
-
-    #     related_serializer = role_serializers[role](data=extra_fields)
-    #     if related_serializer.is_valid():
-    #         related_serializer.save()
-    #     else:
-    #         user.delete()  # Xóa user nếu role object tạo thất bại
-    #         return Response(related_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    #     return Response(
-    #         {
-    #             "message": f"{role.capitalize()} registered successfully!",
-    #             "user_id": user.user_id,
-    #             "role": role,
-    #         },
-    #         status=status.HTTP_201_CREATED,
-    #     )
-
-
 
 
 class ChangePasswordView(APIView):
@@ -244,29 +172,39 @@ class ResetPasswordByAdminView(APIView):
         return Response({"message": f"Mật khẩu của {user_id} đã được đặt lại về mặc định."}, status=status.HTTP_200_OK)
     
 
-
-
-class StudentViewSet(viewsets.ModelViewSet):
-    queryset = Student.objects.select_related('account', 'classroom').all()
-    serializer_class = StudentSerializer
+class AccountViewSet(viewsets.ModelViewSet):
+    queryset = Account.objects.all()
+    serializer_class = AccountSerializer
     permission_classes = [AllowAny]
-    parser_classes = [MultiPartParser, FormParser,JSONParser]
-    search_fields = ['full_name', 'account__user_id', 'classroom__id']
-    ordering_fields = '__all__'
-    filterset_class = StudentFilter
+    filter_backends = [DjangoFilterBackend]
 
 class TeacherViewSet(viewsets.ModelViewSet):
     queryset = Teacher.objects.select_related('account').all()
     serializer_class = TeacherSerializer
     permission_classes = [AllowAny]
-    parser_classes = [MultiPartParser, FormParser,JSONParser]
-    search_fields = ['full_name', 'account__user_id', 'phone_number']
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    search_fields = ['full_name', 'account__user_id', 'phone_number', 'email']
     ordering_fields = '__all__'
+    filter_backends = [DjangoFilterBackend]
 
 class AdminViewSet(viewsets.ModelViewSet):
     queryset = Admin.objects.select_related('account').all()
     serializer_class = AdminSerializer
     permission_classes = [AllowAny]
-    parser_classes = [MultiPartParser, FormParser,JSONParser]
-    search_fields = ['full_name', 'account__user_id', 'phone_number']
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    search_fields = ['full_name', 'account__user_id', 'phone_number', 'email']
     ordering_fields = '__all__'
+    filter_backends = [DjangoFilterBackend]
+
+class StudentViewSet(viewsets.ModelViewSet):
+    queryset = Student.objects.select_related('account', 'room').all()
+    serializer_class = StudentSerializer
+    permission_classes = [AllowAny]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    search_fields = ['full_name', 'account__user_id', 'room__id', 'phone_number', 'email']
+    ordering_fields = '__all__'
+    filter_backends = [DjangoFilterBackend]
+
+# ordering_fields Cho phép người dùng sắp xếp dữ liệu theo bất kỳ trường nào trong model mà không cần khai báo từng trường.
+# ✅ Linh hoạt hơn so với việc chỉ định một số trường cụ thể như ordering_fields = ['full_name', 'day_of_birth'].
+# ✅ Giúp API dễ sử dụng hơn vì client có thể chọn trường để sắp xếp tùy ý.

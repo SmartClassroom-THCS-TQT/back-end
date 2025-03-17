@@ -7,7 +7,7 @@ class AccountSerializer(serializers.ModelSerializer):
     user_id = serializers.CharField(required=True)
     class Meta:
         model = Account
-        fields = ['user_id', 'email',  'role']
+        fields = ['user_id','username', 'role']
         read_only_fields = ['user_id']
 
 class TeacherSerializer(serializers.ModelSerializer):

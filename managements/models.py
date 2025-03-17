@@ -5,11 +5,19 @@ from django.db import models
 from datetime import timedelta, date
 from users.models import Student
 
+class AcademicYear(models.Model):
+    year_name = models.CharField(max_length=20, unique=True)  # Ví dụ: "2024-2025"
+    def __str__(self):
+        return self.year_name
+    class Meta:
+        db_table = 'academic_year'
+        verbose_name = 'Academic Year'
+        verbose_name_plural = 'Academic Years'
+        ordering = ['year_name']
 
 class Room (models.Model):
-    code = models.CharField(max_length=10, primary_key=True, auto_created=True)  # Mã phòng học
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE, related_name="rooms")
     
-    semesters = models.ManyToManyField('Semester', related_name='rooms', blank=True)
     name = models.CharField(max_length=255)
     manager = models.ForeignKey('users.Teacher', on_delete=models.CASCADE, related_name='rooms', null=True, blank=True)
     def get_students(self):
@@ -22,10 +30,12 @@ class Room (models.Model):
         db_table = 'room'
         verbose_name = 'Room'
         verbose_name_plural = 'Rooms'
+        unique_together = ['academic_year', 'name']
         #ordering = ['name']  # Bạn có thể sắp xếp theo tên phòng học 
 # Bảng học kỳ   
 class Semester(models.Model):
     code = models.IntegerField(primary_key=True)
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE, related_name="semesters")
 
     start_date = models.DateField()
     weeks_count = models.IntegerField()
@@ -49,6 +59,7 @@ class Semester(models.Model):
         db_table = 'semester'
         verbose_name = 'Semester'
         verbose_name_plural = 'Semesters'
+        unique_together = ['academic_year', 'code']
         ordering = ['start_date']  # Sắp xếp theo ngày bắt đầu của học kỳ
 
 
@@ -96,10 +107,9 @@ GRADE_CHOICES = [
 
 # bảng phiên học
 class Session(models.Model):
-    id = models.AutoField(primary_key=True)
     semester_code = models.ForeignKey(Semester, on_delete=models.CASCADE, related_name='sessions') # học kỳ
     subject_code = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='sessions') # môn học
-    room_code = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='sessions')  # Room where the lesson is taught
+    room_id = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='sessions')  # Room where the lesson is taught
     day = models.DateField()  # Session day
     time_slot = models.ForeignKey(Time_slot, on_delete=models.CASCADE)  # Session time
 
@@ -114,7 +124,7 @@ class Session(models.Model):
     status = models.BooleanField(default=False)  # Status of the class session
 
     def __str__(self):
-        return f"Học kì: {self.semester_code.code} - Lớp {self.room_code.code} - Ngày:{self.day} - Tiết: {self.time_slot.code} - Môn: {self.subject_code.code} - Giáo viên:  {self.teacher}"
+        return f"Học kì: {self.semester_code.code} - Lớp {self.room_id.name} - Ngày:{self.day} - Tiết: {self.time_slot.code} - Môn: {self.subject_code.code} - Giáo viên:  {self.teacher}"
     
     class Meta:
         db_table = 'session'
@@ -125,15 +135,15 @@ class Session(models.Model):
 class Teacher_assignment(models.Model):
     semester_code = models.ForeignKey(Semester, on_delete=models.CASCADE,related_name='teacher_assignment')  # Semester of the assignment
     subject_code = models.ForeignKey(Subject, on_delete=models.CASCADE,related_name='teacher_assignment')  # Subject of the assignment
-    room_code = models.ForeignKey(Room, on_delete=models.CASCADE,related_name='teacher_assignment')  # Room where the lesson is taught
+    room_id = models.ForeignKey(Room, on_delete=models.CASCADE,related_name='teacher_assignment')  # Room where the lesson is taught
 
     teacher = models.ForeignKey('users.Teacher', on_delete=models.CASCADE, related_name='teacher_assignment')  # Teacher of the assignment
 
     def __str__(self):
-        return f"{self.semester_code} - {self.subject_code} - {self.room_code} - {self.teacher}"
+        return f"{self.semester_code} - {self.subject_code} - {self.room_id.name} - {self.teacher}"
     
     class Meta:
         db_table = 'teacher_assignment'
         verbose_name = 'Teacher Assignment'
         verbose_name_plural = 'Teacher Assignments'
-        unique_together = ['semester_code', 'subject_code', 'room_code', 'teacher']  # Đảm bảo không có sự trùng lặp
+        unique_together = ['semester_code', 'subject_code', 'room_id', 'teacher']  # Đảm bảo không có sự trùng lặp

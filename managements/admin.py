@@ -1,23 +1,24 @@
 from django.contrib import admin
-from .models import Room, Semester, Subject, Time_slot, Session, Teacher_assignment
+from .models import Room, Semester, Subject, Time_slot, Session, Teacher_assignment, AcademicYear
 
 # Admin for Room model
 
+class AcademicYearAdmin(admin.ModelAdmin):
+    list_display = ('id','year_name')  
+    search_fields = ('id','year_name') 
+
+
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ('semesters_list','code', 'name', 'manager', 'student_count')
+    list_display = ('academic_year', 'name', 'manager', 'student_count')
 
     def student_count(self, obj):
         return obj.get_capacity()
     student_count.short_description = 'Number of Students'
-    def semesters_list(self, obj):
-        return ", ".join([str(semester.code) for semester in obj.semesters.all()])
-    
-    semesters_list.short_description = 'Semesters'
 
 
 class SemesterAdmin(admin.ModelAdmin):
-    list_display = ['code', 'start_date', 'weeks_count', 'end_date']
-    search_fields = ['code', 'start_date']
+    list_display = ['academic_year','code', 'start_date', 'weeks_count', 'end_date']
+    search_fields = ['academic_year','code', 'start_date']
 
     # Thêm form validation tại đây nếu cần
     def save_model(self, request, obj, form, change):
@@ -40,13 +41,13 @@ class TimeSlotAdmin(admin.ModelAdmin):
 
 # Admin for Session model
 class SessionAdmin(admin.ModelAdmin):
-    list_display = ('semester_code', 'subject_code', 'room_code', 'day', 'time_slot', 'teacher', 'lesson_number', 'lesson_name', 'grade', 'absences', 'status')
-    search_fields = ('semester_code__name', 'subject_code__name', 'room_code__name', 'teacher__name', 'lesson_name')
-    list_filter = ('semester_code', 'subject_code', 'room_code', 'teacher', 'grade', 'status')
+    list_display = ('semester_code', 'subject_code', 'room_id', 'day', 'time_slot', 'teacher', 'lesson_number', 'lesson_name', 'grade', 'absences', 'status')
+    search_fields = ('semester_code__name', 'subject_code__name', 'room_id__name', 'teacher__name', 'lesson_name')
+    list_filter = ('semester_code', 'subject_code', 'room_id', 'teacher', 'grade', 'status')
     ordering = ('day', 'time_slot')
     fieldsets = (
         (None, {
-            'fields': ('semester_code', 'subject_code', 'room_code', 'day', 'time_slot', 'teacher', 'lesson_number', 'lesson_name')
+            'fields': ('semester_code', 'subject_code', 'room_id', 'day', 'time_slot', 'teacher', 'lesson_number', 'lesson_name')
         }),
         ('Additional Info', {
             'fields': ('detail', 'document', 'comment', 'grade', 'absences', 'status')
@@ -56,10 +57,11 @@ class SessionAdmin(admin.ModelAdmin):
 
 # Admin for Teacher_assignment model
 class TeacherAssignmentAdmin(admin.ModelAdmin):
-    list_display = ('teacher', 'subject_code', 'semester_code', 'room_code')
-    search_fields = ('teacher__user_id', 'subject_code__name', 'semester_code__code', 'room_code__name')
+    list_display = ('teacher', 'subject_code', 'semester_code', 'room_id')
+    search_fields = ('teacher__user_id', 'subject_code__name', 'semester_code__code', 'room_id__name')
 
 # Register all models with their respective admin
+admin.site.register(AcademicYear, AcademicYearAdmin)
 admin.site.register(Room, RoomAdmin)
 admin.site.register(Semester, SemesterAdmin)
 admin.site.register(Subject, SubjectAdmin)

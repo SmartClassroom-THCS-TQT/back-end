@@ -4,32 +4,35 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import Group
 
 class AccountManager(BaseUserManager):
-    def create_user(self, user_id, role, password=None, **extra_fields):
+    def create_user(self, user_id, username, role, password=None, **extra_fields):
         if not user_id:
             raise ValueError('User ID is required')
+        if not username:
+            raise ValueError('Username is required')
         if not role:
             raise ValueError('Role is required')
 
         extra_fields.setdefault("is_active", True)
 
-        user = self.model(user_id=user_id, role=role, **extra_fields)
-        user.set_password(password or user_id)  # Set password
+        user = self.model(user_id=user_id, username=username, role=role, **extra_fields)
+        user.set_password(password or user_id)  # Nếu không có mật khẩu, dùng user_id làm mật khẩu mặc định
         user.save(using=self._db)
-
         return user
 
-    def create_superuser(self, user_id, role='admin', password=None, **extra_fields):
+    def create_superuser(self, username, password=None, **extra_fields):
+        # Đặt các giá trị mặc định cho superuser
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
-        
-        superuser = self.model(user_id=user_id, role=role, **extra_fields)
-        superuser.set_password(password)
-        superuser.save(using=self._db)
+        extra_fields.setdefault('role', 'admin')  # Mặc định role là 'admin' cho superuser
+        extra_fields.setdefault('user_id', username)  # Mặc định user_id bằng username
+
+        # Tạo superuser
+        superuser = self.model(
+            username=username,  # Truyền username
+            **extra_fields  # Truyền tất cả các trường khác từ extra_fields
+        )
+        superuser.set_password(password)  # Đặt mật khẩu
+        superuser.save(using=self._db)  # Lưu superuser vào database
 
         return superuser
 
@@ -43,7 +46,7 @@ class Account(AbstractBaseUser, PermissionsMixin):
     ]
 
     user_id = models.CharField(primary_key=True, max_length=16, editable=False)
-    email = models.EmailField(max_length=255, unique=True, null=True, blank=True)
+    username = models.CharField(max_length=50, unique=True)
     role = models.CharField(max_length=32, choices=USER_ROLE_CHOICES)
 
     
@@ -56,21 +59,22 @@ class Account(AbstractBaseUser, PermissionsMixin):
     
     objects = AccountManager()
 
-    USERNAME_FIELD = 'user_id'
-    REQUIRED_FIELDS = ['email']
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['role']
 
     def __str__(self):
-        return f"{self.user_id} - {self.email} - {self.role}"
+        return f"{self.user_id} - {self.username} - {self.role}"
     class Meta:
         db_table = 'account'
         verbose_name = 'All-Account'
         verbose_name_plural = 'Accounts'
-        ordering = ['user_id']  
+        ordering = ['user_id','username']  
 
 class Teacher(models.Model):
     account = models.OneToOneField(Account,primary_key=True, on_delete=models.CASCADE, related_name='teacher')
 
     phone_number = models.CharField(max_length=32, unique=True, null=True, blank=True) 
+    email = models.EmailField(max_length=255, unique=True, null=True, blank=True)
     full_name = models.CharField(max_length=255)
     sex = models.CharField(max_length=32, null=True, blank=True)
     day_of_birth = models.DateField(null=True, blank=True)
@@ -94,6 +98,7 @@ class Admin(models.Model):
     account = models.OneToOneField(Account,primary_key=True, on_delete=models.CASCADE,related_name='admin')
 
     phone_number = models.CharField(max_length=32, unique=True, null=True, blank=True) 
+    email = models.EmailField(max_length=255, unique=True, null=True, blank=True)
     full_name = models.CharField(max_length=255)
     sex = models.CharField(max_length=32, null=True, blank=True)
     day_of_birth = models.DateField(null=True, blank=True)
@@ -118,7 +123,8 @@ class Student(models.Model):
     account = models.OneToOneField(Account,primary_key=True, on_delete=models.CASCADE,related_name='student')
 
     phone_number = models.CharField(max_length=32, unique=True, null=True, blank=True) 
-    classroom = models.ForeignKey('managements.Room', on_delete=models.CASCADE, null=True, blank=True, related_name='students')
+    email = models.EmailField(max_length=255, unique=True, null=True, blank=True)
+    room = models.ForeignKey('managements.Room', on_delete=models.CASCADE, null=True, blank=True, related_name='students')
     full_name = models.CharField(max_length=255)
     sex = models.CharField(max_length=32, null=True, blank=True)
     day_of_birth = models.DateField(null=True, blank=True)
