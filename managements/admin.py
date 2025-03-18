@@ -9,7 +9,7 @@ class AcademicYearAdmin(admin.ModelAdmin):
 
 
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ('academic_year', 'name', 'manager', 'student_count')
+    list_display = ('id','academic_year', 'name', 'manager', 'student_count')
 
     def student_count(self, obj):
         return obj.get_capacity()

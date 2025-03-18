@@ -19,6 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
 
 # API lấy token CSRF
 class CSRFTokenView(APIView):
@@ -174,6 +175,7 @@ class AccountViewSet(viewsets.ModelViewSet):
     serializer_class = AccountSerializer
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
+    filterset_filters = ['user_id', 'username', 'role']
 
 class TeacherViewSet(viewsets.ModelViewSet):
     queryset = Teacher.objects.select_related('account').all()
@@ -182,7 +184,8 @@ class TeacherViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     search_fields = ['full_name', 'account__user_id', 'phone_number', 'email']
     ordering_fields = '__all__'
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend,SearchFilter]
+    filterset_fields = ['full_name', 'account__user_id', 'phone_number', 'email']
 
 class AdminViewSet(viewsets.ModelViewSet):
     queryset = Admin.objects.select_related('account').all()
@@ -191,16 +194,18 @@ class AdminViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     search_fields = ['full_name', 'account__user_id', 'phone_number', 'email']
     ordering_fields = '__all__'
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend,SearchFilter]
+    filterset_fields = ['full_name', 'account__user_id', 'phone_number', 'email']
 
 class StudentViewSet(viewsets.ModelViewSet):
     queryset = Student.objects.select_related('account', 'room').all()
     serializer_class = StudentSerializer
     permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
-    search_fields = ['full_name', 'account__user_id', 'room__id', 'phone_number', 'email']
+    search_fields = ['full_name', 'account__user_id','room__name','sex', 'phone_number', 'email','active_status']
     ordering_fields = '__all__'
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend,SearchFilter]
+    filterset_fields = ['full_name', 'account__user_id','room__id','sex', 'phone_number', 'email','active_status']
 
 # ordering_fields Cho phép người dùng sắp xếp dữ liệu theo bất kỳ trường nào trong model mà không cần khai báo từng trường.
 # ✅ Linh hoạt hơn so với việc chỉ định một số trường cụ thể như ordering_fields = ['full_name', 'day_of_birth'].

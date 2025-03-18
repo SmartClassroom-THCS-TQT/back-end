@@ -57,7 +57,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'managements',
     'rooms_managements',
-    'django_filters', 
+    'django_filters'
 ]
 
 MIDDLEWARE = [
@@ -175,6 +175,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
 SIMPLE_JWT = {
