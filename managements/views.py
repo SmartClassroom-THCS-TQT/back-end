@@ -77,7 +77,7 @@ class TeacherAssignmentViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherAssignmentSerializer
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['semester_code__code', 'subject_code__code', 'room_id', 'teacher__account']
+    filterset_fields = ['id','semester_code__code', 'subject_code__code', 'room_id__id', 'teacher__account']
     ordering_fields = '__all__'
 
 class CheckCurrentSemester(APIView):

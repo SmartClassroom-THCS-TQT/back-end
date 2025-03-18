@@ -13,6 +13,7 @@ router.register(r'subjects', SubjectViewSet)
 router.register(r'time-slots', TimeSlotViewSet)
 router.register(r'sessions', SessionViewSet)
 router.register(r'teacher-assignments', TeacherAssignmentViewSet)
+router.register(r'academic-years', AcademicYearViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('check-semester/', CheckCurrentSemester.as_view(), name='check_current_semester'),
