@@ -9,9 +9,6 @@ from datetime import timedelta
 from django.utils.dateparse import parse_date
 from django.db import connection
 from rest_framework.permissions import AllowAny
-from django.conf import settings
-from rest_framework.decorators import action
-from datetime import datetime, timedelta
 from django_filters.rest_framework import DjangoFilterBackend
 
 # Academic Year ViewSet
@@ -56,7 +53,7 @@ class SubjectViewSet(viewsets.ModelViewSet):
 class TimeSlotViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     queryset = Time_slot.objects.all()
-    serializer_class = ClassTimeSerializer
+    serializer_class = TimeSlotSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['code', 'start_time', 'end_time']
     ordering_fields = '__all__'
@@ -69,7 +66,6 @@ class SessionViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['semester_code', 'room_id', 'teacher', 'subject_code']
     ordering_fields = '__all__'
-    
 
 # Teacher Assignment ViewSet
 class TeacherAssignmentViewSet(viewsets.ModelViewSet):

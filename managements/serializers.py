@@ -1,46 +1,60 @@
 # serializers.py
 from rest_framework import serializers
+from django_restql.mixins import DynamicFieldsMixin
+from users.serializers import *
+
 from .models import *
 from users.models import Student,Teacher
 
-class ManagerSerializer(serializers.ModelSerializer):
+class ManagerSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     user_id = serializers.CharField(source='account.user_id')  # ✅ Lấy user_id từ CustomUser
     class Meta:
         model = Teacher
         fields = ['user_id', 'full_name', 'image']  # ✅ Trả về object chứa 3 trường này
 
-class AcademicYearSerializer(serializers.ModelSerializer):
+class AcademicYearSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     class Meta:
         model = AcademicYear
         fields = '__all__'
  
-class SemesterSerializer(serializers.ModelSerializer):
+class SemesterSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     class Meta:
         model = Semester
-        fields = ['academic_year','code', 'start_date', 'weeks_count', 'end_date']
+        fields = '__all__'
 
-class RoomSerializer(serializers.ModelSerializer):
+class RoomSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     manager = ManagerSerializer(read_only=True)
+    academic_year = AcademicYearSerializer()
     class Meta:
         model = Room
         fields = '__all__'
 
-class SubjectSerializer(serializers.ModelSerializer):
+class SubjectSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     class Meta:
         model = Subject
         fields = '__all__'
 
 
-class ClassTimeSerializer(serializers.ModelSerializer):
+class TimeSlotSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     class Meta:
         model = Time_slot
         fields = '__all__'
 
-class SessionSerializer(serializers.ModelSerializer):
+class SessionSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
+    semester_code = SemesterSerializer()
+    teacher = TeacherSerializer() 
+    room_id = RoomSerializer()
+    subject_code = SubjectSerializer()
+    time_slot = TimeSlotSerializer()
     class Meta:
         model = Session
         fields = '__all__'
-class TeacherAssignmentSerializer(serializers.ModelSerializer):
+
+class TeacherAssignmentSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
+    semester_code = SemesterSerializer()
+    subject_code = SubjectSerializer()
+    room_id = RoomSerializer()
+    teacher = TeacherSerializer()
     class Meta:
         model = Teacher_assignment
         fields = '__all__'

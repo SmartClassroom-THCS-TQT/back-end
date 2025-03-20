@@ -2,15 +2,16 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from .models import Account, Teacher, Admin, Student
+from django_restql.mixins import DynamicFieldsMixin
 
-class AccountSerializer(serializers.ModelSerializer):
+class AccountSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     user_id = serializers.CharField(required=True)
     class Meta:
         model = Account
         fields = ['user_id','username', 'role']
         read_only_fields = ['user_id']
 
-class TeacherSerializer(serializers.ModelSerializer):
+class TeacherSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     account = serializers.PrimaryKeyRelatedField(queryset=Account.objects.all())
     image = serializers.ImageField(required=False, allow_null=True)
     class Meta:
@@ -19,7 +20,7 @@ class TeacherSerializer(serializers.ModelSerializer):
 
 
 
-class AdminSerializer(serializers.ModelSerializer):
+class AdminSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     account = serializers.PrimaryKeyRelatedField(queryset=Account.objects.all())
     image = serializers.ImageField(required=False, allow_null=True)
     class Meta:
@@ -28,7 +29,7 @@ class AdminSerializer(serializers.ModelSerializer):
 
 
 
-class StudentSerializer(serializers.ModelSerializer):
+class StudentSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     account = serializers.PrimaryKeyRelatedField(queryset=Account.objects.all())
     image = serializers.ImageField(required=False, allow_null=True)
     class Meta:
@@ -37,7 +38,7 @@ class StudentSerializer(serializers.ModelSerializer):
 
 
 
-class ChangePasswordSerializer(serializers.Serializer):
+class ChangePasswordSerializer(DynamicFieldsMixin,serializers.Serializer):
     old_password = serializers.CharField(required=True, write_only=True)
     new_password = serializers.CharField(required=True, write_only=True)
 

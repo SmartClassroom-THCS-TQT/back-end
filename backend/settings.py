@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_json_api',
     'corsheaders',
     'users',
     'rest_framework.authtoken',
@@ -176,6 +177,10 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}
+RESTQL = {
+    'MAX_ALIAS_LEN': 200,
+    'QUERY_PARAM_NAME': 'q'
 }
 
 SIMPLE_JWT = {
