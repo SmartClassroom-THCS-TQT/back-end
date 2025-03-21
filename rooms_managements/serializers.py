@@ -1,16 +1,18 @@
 from rest_framework import serializers
-from .models import Seating
+from django_restql.mixins import DynamicFieldsMixin
+from .models import *
 
-class SeatingSerializer(serializers.ModelSerializer):
+class SeatingSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     class Meta:
         model = Seating
-        fields = ('student', 'room', 'row', 'column')
+        fields = '__all__'
 
-    # Tùy chỉnh để lấy tên đầy đủ của sinh viên thay vì chỉ ID
-    student_full_name = serializers.CharField(source='student.full_name', read_only=True)
-    room_name = serializers.CharField(source='room.name', read_only=True)
-
+class AttendanceSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     class Meta:
-        model = Seating
-        fields = ('student', 'student_full_name', 'room', 'room_name', 'row', 'column')
+        model = Attendance
+        fields = '__all__'
 
+class DeviceSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
+    class Meta:
+        model = Device
+        fields = '__all__'

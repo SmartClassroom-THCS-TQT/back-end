@@ -124,7 +124,7 @@ class Student(models.Model):
 
     phone_number = models.CharField(max_length=32, unique=True, null=True, blank=True) 
     email = models.EmailField(max_length=255, unique=True, null=True, blank=True)
-    room = models.ForeignKey('managements.Room', on_delete=models.CASCADE, null=True, blank=True, related_name='students')
+    # room = models.ForeignKey('managements.Room', on_delete=models.CASCADE, null=True, blank=True, related_name='students')
     full_name = models.CharField(max_length=255)
     sex = models.CharField(max_length=32, null=True, blank=True)
     day_of_birth = models.DateField(null=True, blank=True)

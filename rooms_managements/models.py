@@ -1,17 +1,8 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 class Seating(models.Model):
-    student = models.OneToOneField(
-        'users.Student', 
-        primary_key=True,
-        on_delete=models.CASCADE, 
-        related_name='seating'
-    )
-    room = models.ForeignKey(
-        'managements.Room',
-        on_delete=models.CASCADE, 
-        related_name='seatings'
-    )
+    student = models.OneToOneField('users.Student',on_delete=models.CASCADE, related_name='seating')
+    room = models.ForeignKey('managements.Room', on_delete=models.CASCADE, related_name='seatings')
     row = models.IntegerField()
     column = models.IntegerField()
 
@@ -19,10 +10,11 @@ class Seating(models.Model):
         db_table = 'seating'
         verbose_name = 'Seating'
         verbose_name_plural = 'Seatings'
-        unique_together = ('room', 'row', 'column') 
+        unique_together = ('room', 'row', 'column')  # Mỗi chỗ ngồi duy nhất trong phòng
+        ordering = ['room', 'row', 'column']
 
     def __str__(self):
-         return f"Student {self.student.user.full_name} in Room {self.room.name} at position ({self.row}, {self.column})"
+        return f"{self.student.full_name} - Room {self.room.name} at ({self.row}, {self.column})"
     
 class Attendance(models.Model):
     student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='attendances')
@@ -50,9 +42,13 @@ class Attendance(models.Model):
         return f"{self.student} - {self.session} - {'Có mặt' if self.status else 'Vắng mặt'}"
     
     
-# class Device(models.Model):
-#     device_id = models.CharField(max_length=50, primary_key=True)
-#     room = models.ForeignKey('managemetns.Room', on_delete=models.CASCADE, null=True, blank=True, related_name='devices')
+class Device(models.Model):
+    code = models.CharField(max_length=50, primary_key=True)
+    room = models.ForeignKey('managements.Room', on_delete=models.CASCADE, null=True, blank=True, related_name='devices')
+    class Meta:
+        db_table = 'device'
+        verbose_name = 'Device'
+        verbose_name_plural = 'Devices'
 
-#     def __str__(self):
-#         return self.device_id
+    def __str__(self):
+        return self.device_id

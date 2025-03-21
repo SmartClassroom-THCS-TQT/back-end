@@ -11,9 +11,9 @@ class AcademicYearAdmin(admin.ModelAdmin):
 class RoomAdmin(admin.ModelAdmin):
     list_display = ('id','academic_year', 'name', 'manager', 'student_count')
 
-    def student_count(self, obj):
-        return obj.get_capacity()
-    student_count.short_description = 'Number of Students'
+    def student_count_display(self, obj):
+        return obj.students.count()
+    student_count_display.short_description = 'Total Students'
 
 
 class SemesterAdmin(admin.ModelAdmin):

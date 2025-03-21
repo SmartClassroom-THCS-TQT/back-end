@@ -17,13 +17,14 @@ class AcademicYear(models.Model):
 
 class Room (models.Model):
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE, related_name="rooms")
-    
+
     name = models.CharField(max_length=255)
     manager = models.ForeignKey('users.Teacher', on_delete=models.CASCADE, related_name='rooms', null=True, blank=True)
-    def get_students(self):
-        return Student.objects.filter(classroom=self)
-    def get_capacity(self):
-        return self.students.count()  # Trả về số học sinh trong phòng học
+    students = models.ManyToManyField('users.Student', related_name='rooms')
+
+    @property
+    def student_count(self):
+        return self.students.count()
     def __str__(self):
         return f"{self.name} - {self.id}"
     class Meta:
@@ -31,7 +32,7 @@ class Room (models.Model):
         verbose_name = 'Room'
         verbose_name_plural = 'Rooms'
         unique_together = ['academic_year', 'name']
-        #ordering = ['name']  # Bạn có thể sắp xếp theo tên phòng học 
+
 # Bảng học kỳ   
 class Semester(models.Model):
     code = models.IntegerField(primary_key=True)

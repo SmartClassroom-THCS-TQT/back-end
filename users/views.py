@@ -205,7 +205,7 @@ class StudentViewSet(viewsets.ModelViewSet):
     search_fields = ['full_name', 'account__user_id','room__name','sex', 'phone_number', 'email','active_status']
     ordering_fields = '__all__'
     filter_backends = [DjangoFilterBackend,SearchFilter]
-    filterset_fields = ['full_name', 'account__user_id','room__id','sex', 'phone_number', 'email','active_status']
+    filterset_fields = ['full_name', 'account__user_id','room__id','sex', 'phone_number', 'email','active_status','rooms']
 
 # ordering_fields Cho phép người dùng sắp xếp dữ liệu theo bất kỳ trường nào trong model mà không cần khai báo từng trường.
 # ✅ Linh hoạt hơn so với việc chỉ định một số trường cụ thể như ordering_fields = ['full_name', 'day_of_birth'].

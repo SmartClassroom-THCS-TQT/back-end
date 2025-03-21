@@ -63,9 +63,9 @@ admin.site.register(Admin, AdminAdmin)
 
 # StudentAdmin
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'email','get_student_id', 'phone_number', 'room', 'sex', 'day_of_birth', 'nation', 'active_status')
+    list_display = ('full_name', 'email','get_student_id', 'phone_number', 'sex', 'day_of_birth', 'nation', 'active_status')
     search_fields = ('full_name', 'email','phone_number', 'sex', 'nation', 'active_status')
-    list_filter = ('active_status', 'sex', 'nation', 'room')
+    list_filter = ('active_status', 'sex', 'nation')
     ordering = ['full_name']
     
 
