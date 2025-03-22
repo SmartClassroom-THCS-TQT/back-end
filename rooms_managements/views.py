@@ -11,6 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 class SeatingViewSet(viewsets.ModelViewSet):
     queryset = Seating.objects.all()
     serializer_class = SeatingSerializer
+    authention_classes = [AllowAny]
     permission_classes = [AllowAny]
 
     # Action để hoán đổi chỗ ngồi của 2 học sinh
@@ -62,9 +63,9 @@ class SeatingViewSet(viewsets.ModelViewSet):
 
 # ViewSets cho các model
 class SeatingViewSet(viewsets.ModelViewSet):
+    permission_classes = [AllowAny]
     queryset = Seating.objects.all()
     serializer_class = SeatingSerializer
-    Permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['room', 'row', 'column']
     odering_fields = '__all__'
@@ -73,7 +74,8 @@ class SeatingViewSet(viewsets.ModelViewSet):
 class AttendanceViewSet(viewsets.ModelViewSet):
     queryset = Attendance.objects.all()
     serializer_class = AttendanceSerializer
-    Permission_classes =[AllowAny]
+    authention_classes = [AllowAny]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['student', 'session', 'status']
     ordering_fields = '__all__'
@@ -82,7 +84,8 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
-    Permission_classes = [AllowAny]
+    authention_classes = [AllowAny]
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['room']
     ordering_fields = '__all__'
