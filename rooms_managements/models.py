@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 class Seating(models.Model):
     student = models.OneToOneField('users.Student',on_delete=models.CASCADE, related_name='seating')
     room = models.ForeignKey('managements.Room', on_delete=models.CASCADE, related_name='seatings')
+    # mặc dù hs đã được liên kết với room, nhưng hs có thể có nhiều chỗ ngồi ở các lớp khác nhau đó
     row = models.IntegerField()
     column = models.IntegerField()
 

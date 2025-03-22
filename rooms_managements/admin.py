@@ -4,15 +4,14 @@ from django.utils.translation import gettext_lazy as _
 
 # Custom admin for Seating
 class SeatingAdmin(admin.ModelAdmin):
-    list_display = ('student', 'room', 'row', 'column')  # Display the relevant fields
-    search_fields = ('student__full_name', 'room__name')  # Allow searching by student name and room name
-    list_filter = ('room',)  # Filter by room
-    ordering = ('room', 'row', 'column')  # Order by room, row, column
+    list_display = ('student','room', 'row', 'column')  # Display the relevant fields
+    search_fields = ('room','student__full_name', 'room__name')  # Allow searching by student name and room name
+    ordering = ('room','row', 'column')  # Order by room, row, column
 
     # Customizing the form display
     fieldsets = (
         (None, {
-            'fields': ('student', 'room', 'row', 'column')
+            'fields': ('student','room', 'row', 'column')
         }),
     )
 

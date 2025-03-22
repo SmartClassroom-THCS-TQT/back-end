@@ -9,5 +9,5 @@ router.register(r'attendances', AttendanceViewSet)
 router.register(r'devices', DeviceViewSet)
 
 urlpatterns = [
-    path('rooms_managements', include(router.urls)),  
+    path('', include(router.urls)),  
 ]

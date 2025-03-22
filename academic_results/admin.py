@@ -1,15 +1,31 @@
 from django.contrib import admin
-from .models import Grade
-class GradeAdmin(admin.ModelAdmin):
-    list_display = ('student', 'subject', 'score', 'grade_type', 'custom_grade_type', 'semester', 'date_assigned')
-    search_fields = ('student__user__full_name', 'subject__name', 'custom_grade_type')  # Tìm kiếm theo tên học sinh, môn học, và tên loại điểm tùy chỉnh
-    list_filter = ('grade_type', 'semester')  # Bộ lọc theo loại điểm và học kỳ
-    ordering = ('-date_assigned',)  # Sắp xếp theo ngày chấm điểm (mới nhất trước)
+from .models import Grade, GradeType
+
+
+@admin.register(GradeType)
+class GradeTypeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'weight', 'is_global', 'created_by', 'room')
+    list_filter = ('is_global', 'room')
+    search_fields = ('name', 'created_by__user__full_name', 'room__name')
+    autocomplete_fields = ('created_by', 'room')  # nếu nhiều dữ liệu
+    ordering = ('-is_global', 'name')
 
     def get_readonly_fields(self, request, obj=None):
-        # Nếu grade_type là 'custom', cho phép nhập tên loại điểm
-        if obj and obj.grade_type == 'custom':
-            return ('student', 'subject', 'score', 'grade_type', 'semester', 'date_assigned')
-        return super().get_readonly_fields(request, obj)
+        # Nếu đã được tạo thì không cho sửa một số trường quan trọng
+        if obj:
+            return self.readonly_fields + ('is_global', 'created_by', 'room')
+        return self.readonly_fields
 
-admin.site.register(Grade, GradeAdmin)
+
+@admin.register(Grade)
+class GradeAdmin(admin.ModelAdmin):
+    list_display = ('student', 'subject', 'grade_type', 'score', 'semester', 'date_assigned')
+    list_filter = ('semester', 'subject', 'grade_type__name')
+    search_fields = ('student__user__full_name', 'subject__name', 'grade_type__name')
+    autocomplete_fields = ('student', 'subject', 'grade_type', 'semester')
+    ordering = ('-date_assigned',)
+
+    def get_queryset(self, request):
+        # Tối ưu queryset
+        qs = super().get_queryset(request)
+        return qs.select_related('student__user', 'subject', 'grade_type', 'semester')

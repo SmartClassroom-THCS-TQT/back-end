@@ -1,36 +1,53 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
-# Mô hình liên kết với học sinh (Student) và môn học (Subject)
+
+class GradeType(models.Model):
+    name = models.CharField(max_length=100)  # Tên loại điểm
+    weight = models.DecimalField(max_digits=4, decimal_places=2, default=1.0)  # Hệ số điểm
+    is_global = models.BooleanField(default=True)  # Có phải loại điểm dùng chung hay không
+    created_by = models.ForeignKey(
+        'users.Teacher',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='custom_grade_types'
+    )
+    room = models.ForeignKey(  # Chỉ định nếu loại điểm chỉ áp dụng trong một lớp cụ thể
+        'managements.Room',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='custom_grade_types'
+    )
+
+    class Meta:
+        db_table = 'grade_type'
+        verbose_name = 'Loại điểm'
+        verbose_name_plural = 'Các loại điểm'
+
+    def clean(self):
+        # Nếu không phải global thì phải gắn với lớp và giáo viên
+        if not self.is_global and (self.room is None or self.created_by is None):
+            raise ValidationError("Loại điểm local cần phải có cả 'room' và 'created_by'.")
+
+    def __str__(self):
+        return f"{self.name} ({'Toàn hệ thống' if self.is_global else 'Lớp ' + str(self.room)})"
+
 class Grade(models.Model):
-    # Các loại điểm cố định
-    GRADE_CHOICES = [
-        ('quick_test', 'Điểm test nhanh (15 phút)'),
-        ('quiz', 'Điểm kiểm tra'),
-        ('midterm', 'Điểm thi giữa kỳ'),
-        ('final_exam', 'Điểm thi cuối kỳ'),
-        ('custom', 'Điểm tùy chỉnh')  # Loại điểm cho phép người dùng tùy chỉnh tên
-    ]
-    semester = models.ForeignKey('managements.Semester', on_delete=models.CASCADE, related_name='grades')  # Học kỳ
-    student = models.ForeignKey('accounts.Student', on_delete=models.CASCADE, related_name='grades')  # Liên kết với học sinh
-    subject = models.ForeignKey('managements.Subject', on_delete=models.CASCADE, related_name='grades')  # Liên kết với môn học
-    score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)  # Điểm của học sinh, có thể chứa điểm thập phân
-    grade_type = models.CharField(max_length=20, choices=GRADE_CHOICES, default='quick_test')
-    custom_grade_type = models.CharField(max_length=100, null=True, blank=True)  # Cho phép người dùng nhập loại điểm tùy chỉnh
-    date_assigned = models.DateField(null=True, blank=True)  # Ngày chấm điểm
+    semester = models.ForeignKey('managements.Semester', on_delete=models.CASCADE, related_name='grades')
+    student = models.ForeignKey('accounts.Student', on_delete=models.CASCADE, related_name='grades')
+    subject = models.ForeignKey('managements.Subject', on_delete=models.CASCADE, related_name='grades')
+    score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    grade_type = models.ForeignKey('GradeType', on_delete=models.CASCADE, related_name='grades')
+    date_assigned = models.DateField(null=True, blank=True)
 
     class Meta:
         db_table = 'grade'
         verbose_name = 'Điểm'
         verbose_name_plural = 'Điểm của học sinh'
-        unique_together = ('student', 'subject', 'semester')  # Mỗi học sinh có một điểm duy nhất cho mỗi môn học và học kỳ
-
-    def save(self, *args, **kwargs):
-        # Nếu grade_type là "custom" mà không có custom_grade_type, thì sẽ raise lỗi
-        if self.grade_type == 'custom' and not self.custom_grade_type:
-            raise ValueError('Vui lòng nhập tên loại điểm cho điểm tùy chỉnh.')
-        super().save(*args, **kwargs)
+        # Có thể cho phép nhiều điểm cùng loại nếu cần, hoặc chỉnh sửa unique_together tùy mục đích
+        # unique_together = ('student', 'subject', 'semester', 'grade_type')
 
     def __str__(self):
-        grade_type_display = self.custom_grade_type if self.grade_type == 'custom' else dict(self.GRADE_CHOICES).get(self.grade_type, '')
-        return f"{self.student} - {self.subject} - {grade_type_display} - {self.score}"
-
+        return f"{self.student} - {self.subject} - {self.grade_type.name} - {self.score}"
