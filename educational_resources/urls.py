@@ -9,5 +9,5 @@ router.register(r'document-types', DocumentTypeViewSet)
 router.register('tags', TagViewSet)
 
 urlpatterns = [
-    path('api/', include(router.urls)),  
+    path('', include(router.urls)),  
 ]

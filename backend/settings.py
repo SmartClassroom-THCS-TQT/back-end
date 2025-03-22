@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'managements',
     'rooms_managements',
     'educational_resources',
+    'academic_results',
     'django_filters'
 ]
 

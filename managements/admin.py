@@ -10,6 +10,7 @@ class AcademicYearAdmin(admin.ModelAdmin):
 
 class RoomAdmin(admin.ModelAdmin):
     list_display = ('id','academic_year', 'name', 'manager', 'student_count')
+    search_fields = ('id','academic_year__year_name', 'name', 'manager__name')
 
     def student_count_display(self, obj):
         return obj.students.count()
