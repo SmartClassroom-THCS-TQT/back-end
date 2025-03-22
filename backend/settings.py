@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'managements',
     'rooms_managements',
+    'educational_resources',
     'django_filters'
 ]
 

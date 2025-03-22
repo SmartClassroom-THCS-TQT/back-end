@@ -10,8 +10,8 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/managements/', include('managements.urls')),
     path('api/rooms/', include('rooms_managements.urls')),
-    # path('api/attendance/', include('attendance.urls')),
-    # path('api/documents/', include('Appdocuments.urls')),
+    path('api/educational-resources/', include('educational_resources.urls')),
+    # path('api/posts/', include('posts.urls')),
 ]
 
 if settings.DEBUG:
