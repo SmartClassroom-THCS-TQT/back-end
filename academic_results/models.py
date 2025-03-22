@@ -36,7 +36,7 @@ class GradeType(models.Model):
 
 class Grade(models.Model):
     semester = models.ForeignKey('managements.Semester', on_delete=models.CASCADE, related_name='grades')
-    student = models.ForeignKey('accounts.Student', on_delete=models.CASCADE, related_name='grades')
+    student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='grades')
     subject = models.ForeignKey('managements.Subject', on_delete=models.CASCADE, related_name='grades')
     score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     grade_type = models.ForeignKey('GradeType', on_delete=models.CASCADE, related_name='grades')

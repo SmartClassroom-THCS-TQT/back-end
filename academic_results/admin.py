@@ -2,11 +2,10 @@ from django.contrib import admin
 from .models import Grade, GradeType
 
 
-@admin.register(GradeType)
 class GradeTypeAdmin(admin.ModelAdmin):
     list_display = ('name', 'weight', 'is_global', 'created_by', 'room')
     list_filter = ('is_global', 'room')
-    search_fields = ('name', 'created_by__user__full_name', 'room__name')
+    search_fields = ('name', 'created_by__Teacher__full_name', 'room__name')
     autocomplete_fields = ('created_by', 'room')  # nếu nhiều dữ liệu
     ordering = ('-is_global', 'name')
 
@@ -17,15 +16,18 @@ class GradeTypeAdmin(admin.ModelAdmin):
         return self.readonly_fields
 
 
-@admin.register(Grade)
 class GradeAdmin(admin.ModelAdmin):
     list_display = ('student', 'subject', 'grade_type', 'score', 'semester', 'date_assigned')
     list_filter = ('semester', 'subject', 'grade_type__name')
-    search_fields = ('student__user__full_name', 'subject__name', 'grade_type__name')
+    search_fields = ('student__full_name', 'subject__name', 'grade_type__name')
     autocomplete_fields = ('student', 'subject', 'grade_type', 'semester')
     ordering = ('-date_assigned',)
 
     def get_queryset(self, request):
         # Tối ưu queryset
         qs = super().get_queryset(request)
-        return qs.select_related('student__user', 'subject', 'grade_type', 'semester')
+        return qs.select_related('student', 'subject', 'grade_type', 'semester')
+
+# Đăng ký các model với admin
+admin.site.register(GradeType, GradeTypeAdmin)
+admin.site.register(Grade, GradeAdmin)
