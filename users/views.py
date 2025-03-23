@@ -198,14 +198,14 @@ class AdminViewSet(viewsets.ModelViewSet):
     filterset_fields = ['full_name', 'account__user_id', 'phone_number', 'email']
 
 class StudentViewSet(viewsets.ModelViewSet):
-    queryset = Student.objects.select_related('account', 'room').all()
+    queryset = Student.objects.select_related('account').prefetch_related('rooms').all()
     serializer_class = StudentSerializer
     permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
-    search_fields = ['full_name', 'account__user_id','room__name','sex', 'phone_number', 'email','active_status']
+    search_fields = ['full_name', 'account__user_id','rooms__name','sex', 'phone_number', 'email','active_status']
     ordering_fields = '__all__'
     filter_backends = [DjangoFilterBackend,SearchFilter]
-    filterset_fields = ['full_name', 'account__user_id','room__id','sex', 'phone_number', 'email','active_status','rooms']
+    filterset_fields = ['full_name', 'account__user_id','rooms__id','sex', 'phone_number', 'email','active_status','rooms']
 
 # ordering_fields Cho phép người dùng sắp xếp dữ liệu theo bất kỳ trường nào trong model mà không cần khai báo từng trường.
 # ✅ Linh hoạt hơn so với việc chỉ định một số trường cụ thể như ordering_fields = ['full_name', 'day_of_birth'].

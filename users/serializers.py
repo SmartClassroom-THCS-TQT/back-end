@@ -4,6 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from .models import Account, Teacher, Admin, Student
 from django_restql.mixins import DynamicFieldsMixin
 from rooms_managements.serializers import SeatingSerializer
+from managements.models import Room
 
 class AccountSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     user_id = serializers.CharField(required=True)
@@ -34,6 +35,7 @@ class StudentSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     account = serializers.PrimaryKeyRelatedField(queryset=Account.objects.all())
     image = serializers.ImageField(required=False, allow_null=True)
     seating = SeatingSerializer(read_only=True)
+    rooms = serializers.PrimaryKeyRelatedField(queryset=Room.objects.all(), many=True)
     class Meta:
         model = Student
         fields = '__all__'
