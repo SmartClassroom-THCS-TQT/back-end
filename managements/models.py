@@ -20,7 +20,7 @@ class Room (models.Model):
 
     name = models.CharField(max_length=255)
     manager = models.ForeignKey('users.Teacher', on_delete=models.CASCADE, related_name='rooms', null=True, blank=True)
-    students = models.ManyToManyField('users.Student', related_name='rooms', null=True, blank=True)
+    students = models.ManyToManyField('users.Student', related_name='rooms', blank=True)
 
     @property
     def student_count(self):

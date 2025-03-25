@@ -8,12 +8,14 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Cài đặt các thư viện yêu cầu
-# RUN pip install -r requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Sao chép mã nguồn vào thư mục làm việc
 COPY . .
 
+# Chạy lệnh để chuẩn bị cho ứng dụng Django
+RUN python manage.py collectstatic --noinput
+RUN python manage.py migrate
 
-# Chạy lệnh để khởi chạy ứng án
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Chạy Gunicorn để phục vụ ứng dụng Django
+CMD ["gunicorn", "myproject.wsgi:application", "--bind", "0.0.0.0:8000"]

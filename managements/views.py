@@ -64,7 +64,7 @@ class SessionViewSet(viewsets.ModelViewSet):
     serializer_class = SessionSerializer
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['semester_code', 'room_id', 'teacher', 'subject_code']
+    filterset_fields = ['semester_code', 'room_id', 'teacher','day','time_slot', 'subject_code']
     ordering_fields = '__all__'
 
 # Teacher Assignment ViewSet
