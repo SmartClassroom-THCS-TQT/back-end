@@ -52,4 +52,4 @@ class Device(models.Model):
         verbose_name_plural = 'Devices'
 
     def __str__(self):
-        return self.device_id
+        return self.code
