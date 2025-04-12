@@ -32,7 +32,7 @@ class Attendance(models.Model):
 
     def clean(self):
         # Kiểm tra xem người dùng (student) có phải là sinh viên không
-        if not self.student.user.role == 'student':
+        if not self.student.account.role == 'student':
             raise ValidationError('User must be a student.')
 
     def save(self, *args, **kwargs):

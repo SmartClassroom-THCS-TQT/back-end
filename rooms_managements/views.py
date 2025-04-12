@@ -7,12 +7,15 @@ from rest_framework.decorators import action
 from users.models import Account
 from rest_framework.permissions import IsAuthenticated,AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
+from users.models import Student
 
 class SeatingViewSet(viewsets.ModelViewSet):
     queryset = Seating.objects.all()
     serializer_class = SeatingSerializer
-    authention_classes = [AllowAny]
     permission_classes = [AllowAny]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['room', 'row', 'column']
+    ordering_fields = '__all__'
 
     # Action để hoán đổi chỗ ngồi của 2 học sinh
     @action(detail=False, methods=['post'])
@@ -24,52 +27,40 @@ class SeatingViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Both user_id_1 and user_id_2 are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Sử dụng raw SQL để lấy thông tin chỗ ngồi của 2 học sinh
-            with connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT s.id, s.student_id, s.room_id, s.row, s.column
-                    FROM seating s
-                    JOIN custom_user cu1 ON cu1.user_id = %s AND cu1.id = s.student_id
-                    JOIN custom_user cu2 ON cu2.user_id = %s AND cu2.id = s.student_id
-                    """, [user_id_1, user_id_2])
+            student_1 = Student.objects.get(account__user_id=user_id_1)
+            student_2 = Student.objects.get(account__user_id=user_id_2)
 
-                seating_data = cursor.fetchall()
+            seating_1 = Seating.objects.get(student=student_1)
+            seating_2 = Seating.objects.get(student=student_2)
 
-            if len(seating_data) != 2:
-                return Response({'error': 'One or both students do not have seating positions'}, status=status.HTTP_400_BAD_REQUEST)
+            # Lưu lại vị trí gốc
+            room_1, row_1, col_1 = seating_1.room, seating_1.row, seating_1.column
+            room_2, row_2, col_2 = seating_2.room, seating_2.row, seating_2.column
 
-            # Hoán đổi vị trí của hai học sinh
-            student_1 = seating_data[0]
-            student_2 = seating_data[1]
-            room_1, row_1, column_1 = student_1[2], student_1[3], student_1[4]
-            room_2, row_2, column_2 = student_2[2], student_2[3], student_2[4]
+            # Bước 1: chuyển seating_1 về vị trí tạm (-1, -1) không hợp lệ
+            seating_1.row, seating_1.column = -1, -1
+            seating_1.save()
 
-            # Xóa hai chỗ ngồi hiện tại
-            Seating.objects.filter(student_id=student_1[1]).delete()
-            Seating.objects.filter(student_id=student_2[1]).delete()
+            # Bước 2: chuyển seating_2 vào chỗ của seating_1
+            seating_2.room, seating_2.row, seating_2.column = room_1, row_1, col_1
+            seating_2.save()
 
-            # Tạo lại chỗ ngồi sau khi hoán đổi
-            Seating.objects.create(student_id=student_2[1], room_id=room_1, row=row_1, column=column_1)
-            Seating.objects.create(student_id=student_1[1], room_id=room_2, row=row_2, column=column_2)
+            # Bước 3: chuyển seating_1 vào chỗ cũ của seating_2
+            seating_1.room, seating_1.row, seating_1.column = room_2, row_2, col_2
+            seating_1.save()
 
             return Response({
                 'message': 'Seats swapped successfully',
-                'student_1_new_position': {'room': room_2, 'row': row_2, 'column': column_2},
-                'student_2_new_position': {'room': room_1, 'row': row_1, 'column': column_1},
+                'student_1_new_position': {'room': room_2.id, 'row': row_2, 'column': col_2},
+                'student_2_new_position': {'room': room_1.id, 'row': row_1, 'column': col_1},
             }, status=status.HTTP_200_OK)
 
+        except Student.DoesNotExist:
+            return Response({'error': 'One or both students not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Seating.DoesNotExist:
+            return Response({'error': 'One or both students do not have seating positions'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-# ViewSets cho các model
-class SeatingViewSet(viewsets.ModelViewSet):
-    permission_classes = [AllowAny]
-    queryset = Seating.objects.all()
-    serializer_class = SeatingSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['room', 'row', 'column']
-    odering_fields = '__all__'
-
 
 class AttendanceViewSet(viewsets.ModelViewSet):
     queryset = Attendance.objects.all()

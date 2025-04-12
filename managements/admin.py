@@ -42,7 +42,7 @@ class TimeSlotAdmin(admin.ModelAdmin):
 
 # Admin for Session model
 class SessionAdmin(admin.ModelAdmin):
-    list_display = ('semester_code', 'subject_code', 'room_id', 'day', 'time_slot', 'teacher', 'lesson_number', 'lesson_name', 'grade', 'absences', 'status')
+    list_display = ('id','semester_code', 'subject_code', 'room_id', 'day', 'time_slot', 'teacher', 'lesson_number', 'lesson_name', 'grade', 'absences', 'status')
     search_fields = ('semester_code__name', 'subject_code__name', 'room_id__name', 'teacher__name', 'lesson_name')
     list_filter = ('semester_code', 'subject_code', 'room_id', 'teacher', 'grade', 'status')
     ordering = ('day', 'time_slot')
