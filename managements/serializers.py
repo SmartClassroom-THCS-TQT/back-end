@@ -24,6 +24,7 @@ class SemesterSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
 
 class RoomSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     manager = ManagerSerializer(read_only=True)
+    students = StudentSerializer(many=True, read_only=True)
     academic_year = AcademicYearSerializer()
     class Meta:
         model = Room

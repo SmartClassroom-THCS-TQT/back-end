@@ -10,6 +10,7 @@ from django.utils.dateparse import parse_date
 from django.db import connection
 from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
+from .filters import *
 
 # Academic Year ViewSet
 class AcademicYearViewSet(viewsets.ModelViewSet):
@@ -64,7 +65,8 @@ class SessionViewSet(viewsets.ModelViewSet):
     serializer_class = SessionSerializer
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['semester_code', 'room_id', 'teacher','day','time_slot__code', 'subject_code']
+    #filterset_fields = ['semester_code', 'room_id', 'teacher','day','time_slot__code', 'subject_code']
+    filterset_class = SessionFilter
     ordering_fields = '__all__'
 
 # Teacher Assignment ViewSet
