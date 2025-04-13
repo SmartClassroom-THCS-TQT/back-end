@@ -181,7 +181,7 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 RESTQL = {
-    'MAX_ALIAS_LEN': 200,
+    'MAX_ALIAS_LEN': 300,
     'QUERY_PARAM_NAME': 'q'
 }
 
@@ -201,4 +201,3 @@ MEDIA_URL = '/media/'
 
 
 CORS_ALLOW_ALL_ORIGINS = True
-
