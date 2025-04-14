@@ -8,6 +8,10 @@ from users.models import Account
 from rest_framework.permissions import IsAuthenticated,AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from users.models import Student
+from rest_framework.views import APIView
+from managements.models import Session
+from django.utils.timezone import localtime, localdate
+
 
 class SeatingViewSet(viewsets.ModelViewSet):
     queryset = Seating.objects.all()
@@ -80,3 +84,58 @@ class DeviceViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['room']
     ordering_fields = '__all__'
+
+class DeviceAttendanceAPIView(APIView):
+    permission_classes = []  # hoặc cho phép cụ thể sau
+
+    def post(self, request):
+        student_id = request.data.get('student_id')
+        device_code = request.data.get('device_code')
+
+        if not student_id or not device_code:
+            return Response({'detail': 'Missing student_id or device_code.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Lấy student và thiết bị
+        try:
+            student = Student.objects.get(account__user_id=student_id)
+        except Student.DoesNotExist:
+            return Response({'detail': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            device = Device.objects.get(code=device_code)
+        except Device.DoesNotExist:
+            return Response({'detail': 'Device not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        room = device.room
+        if not room.students.filter(account__user_id=student_id).exists():
+            return Response({'detail': 'Student not assigned to this room.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Lọc session hôm nay trong room
+        today = localdate()
+        sessions_today = Session.objects.filter(
+            room_id=room,
+            day=today
+        )
+
+        attendances_marked = []
+        for session in sessions_today:
+            attendance, created = Attendance.objects.get_or_create(
+                student=student,
+                session=session,
+                defaults={'status': True}
+            )
+            if not created:
+                attendance.status = True
+                attendance.save()
+            attendances_marked.append({
+                'session_id': session.id,
+                'lesson_name': session.lesson_name,
+                'status': attendance.status,
+                'time': localtime(attendance.attendance_time)
+            })
+
+        return Response({
+            'detail': 'Attendance marked successfully.',
+            'student': student.full_name,
+            'sessions_marked': attendances_marked
+        }, status=status.HTTP_200_OK)

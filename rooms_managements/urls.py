@@ -9,5 +9,6 @@ router.register(r'attendances', AttendanceViewSet)
 router.register(r'devices', DeviceViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),  
+    path('', include(router.urls)), 
+    path('device-attendance/', DeviceAttendanceAPIView.as_view(), name='device-attendance'), 
 ]
