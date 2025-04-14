@@ -60,7 +60,7 @@ INSTALLED_APPS = [
     'rooms_managements',
     'educational_resources',
     'academic_results',
-    'django_filters'
+    'django_filters',
 ]
 
 MIDDLEWARE = [
