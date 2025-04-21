@@ -18,7 +18,7 @@ class AcademicYearViewSet(viewsets.ModelViewSet):
     queryset = AcademicYear.objects.all()
     serializer_class = AcademicYearSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['year_name']
+    filterset_class = AcademicYearFilter
     ordering_fields = '__all__'
 
 # Semester ViewSet
@@ -27,16 +27,19 @@ class SemesterViewSet(viewsets.ModelViewSet):
     queryset = Semester.objects.all()
     serializer_class = SemesterSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['code', 'academic_year__year_name']
+    filterset_class = SemesterFilter
     ordering_fields = '__all__'
 
 # Room ViewSet
 class RoomViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     queryset = Room.objects.all()
-    serializer_class = RoomSerializer
+    def get_serializer_class(self):
+        if self.request.method in ['POST', 'PUT', 'PATCH']:
+            return RoomWriteSerializer
+        return RoomSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'academic_year__year_name', 'manager__account','students__account']
+    filterset_class = RoomFilter
     ordering_fields = '__all__'
 
 
@@ -46,7 +49,7 @@ class SubjectViewSet(viewsets.ModelViewSet):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['code', 'name']
+    filterset_class = SubjectFilter
     ordering_fields = '__all__'
 
 
@@ -56,7 +59,7 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
     queryset = Time_slot.objects.all()
     serializer_class = TimeSlotSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['code', 'start_time', 'end_time']
+    filterset_class = TimeSlotFilter
     ordering_fields = '__all__'
 
 # Session ViewSet
@@ -75,7 +78,7 @@ class TeacherAssignmentViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherAssignmentSerializer
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id','semester_code__code', 'subject_code__code', 'room_id__id', 'teacher__account']
+    filterset_class = TeacherAssignmentFilter
     ordering_fields = '__all__'
 
 class CheckCurrentSemester(APIView):

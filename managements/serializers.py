@@ -23,13 +23,21 @@ class SemesterSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
         fields = '__all__'
 
 class RoomSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
-    manager = ManagerSerializer(read_only=True)
-    students = StudentSerializer(many=True, read_only=True)
+    manager = ManagerSerializer()
+    students = StudentSerializer(many=True)
     academic_year = AcademicYearSerializer()
+
     class Meta:
         model = Room
         fields = '__all__'
+class RoomWriteSerializer(serializers.ModelSerializer):
+    manager = serializers.PrimaryKeyRelatedField(queryset=Teacher.objects.all())
+    students = serializers.PrimaryKeyRelatedField(queryset=Student.objects.all(), many=True,required=False)
+    academic_year = serializers.PrimaryKeyRelatedField(queryset=AcademicYear.objects.all())
 
+    class Meta:
+        model = Room
+        fields = '__all__'
 class SubjectSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     class Meta:
         model = Subject
