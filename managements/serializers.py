@@ -22,7 +22,7 @@ class SemesterSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
         model = Semester
         fields = '__all__'
 
-class RoomSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
+class RoomReadSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     manager = ManagerSerializer()
     students = StudentSerializer(many=True)
     academic_year = AcademicYearSerializer()
@@ -30,14 +30,16 @@ class RoomSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     class Meta:
         model = Room
         fields = '__all__'
-class RoomWriteSerializer(serializers.ModelSerializer):
+class RoomSerializer(serializers.ModelSerializer):
     manager = serializers.PrimaryKeyRelatedField(queryset=Teacher.objects.all())
-    students = serializers.PrimaryKeyRelatedField(queryset=Student.objects.all(), many=True,required=False)
-    academic_year = serializers.PrimaryKeyRelatedField(queryset=AcademicYear.objects.all())
-
+    students = serializers.PrimaryKeyRelatedField(
+        queryset=Student.objects.all(), many=True, required=False
+    )
     class Meta:
         model = Room
         fields = '__all__'
+
+
 class SubjectSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     class Meta:
         model = Subject
@@ -50,11 +52,17 @@ class TimeSlotSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
         fields = '__all__'
 
 class SessionSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
+
+    class Meta:
+        model = Session
+        fields = '__all__'
+class SessionReadSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     semester_code = SemesterSerializer()
-    teacher = TeacherSerializer() 
-    room_id = RoomSerializer()
     subject_code = SubjectSerializer()
+    room_id = RoomSerializer()
     time_slot = TimeSlotSerializer()
+    teacher = TeacherSerializer()
+
     class Meta:
         model = Session
         fields = '__all__'
