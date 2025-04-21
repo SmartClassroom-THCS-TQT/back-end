@@ -36,6 +36,19 @@ class StudentSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     image = serializers.ImageField(required=False, allow_null=True)
     seating = SeatingSerializer(read_only=True)
     rooms = serializers.PrimaryKeyRelatedField(queryset=Room.objects.all(), many=True)
+    def update(self, instance, validated_data):
+        rooms = validated_data.pop('rooms', None)
+        instance = super().update(instance, validated_data)
+
+        if rooms is not None:
+            # Nếu bạn muốn thêm vào chứ không thay thế:
+            instance.rooms.add(*rooms)
+
+            # Nếu bạn muốn thay toàn bộ rooms (xoá cũ, thêm mới):
+            # instance.rooms.set(rooms)
+
+        return instance
+
     class Meta:
         model = Student
         fields = '__all__'

@@ -35,6 +35,18 @@ class RoomSerializer(serializers.ModelSerializer):
     students = serializers.PrimaryKeyRelatedField(
         queryset=Student.objects.all(), many=True, required=False
     )
+    def update(self, instance, validated_data):
+        students = validated_data.pop('students', None)
+        instance = super().update(instance, validated_data)
+
+        if students is not None:
+            # Nếu muốn thay thế toàn bộ
+            #instance.students.set(students)
+
+            # Nếu muốn thêm vào thay vì xóa cái cũ:
+            instance.students.add(*students)
+
+        return instance
     class Meta:
         model = Room
         fields = '__all__'
