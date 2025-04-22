@@ -78,7 +78,10 @@ class SessionViewSet(viewsets.ModelViewSet):
 # Teacher Assignment ViewSet
 class TeacherAssignmentViewSet(viewsets.ModelViewSet):
     queryset = Teacher_assignment.objects.all()
-    serializer_class = TeacherAssignmentSerializer
+    def get_serializer_class(self):
+        if self.action in ['GET']:
+            return TeacherAssignmentREADSerializer
+        return TeacherAssignmentSerializer
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
     filterset_class = TeacherAssignmentFilter

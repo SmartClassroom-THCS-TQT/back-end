@@ -79,11 +79,17 @@ class SessionReadSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         model = Session
         fields = '__all__'
 
-class TeacherAssignmentSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
+class TeacherAssignmentREADSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     semester_code = SemesterSerializer()
     subject_code = SubjectSerializer()
     room_id = RoomSerializer()
     teacher = TeacherSerializer()
+    class Meta:
+        model = Teacher_assignment
+        fields = '__all__'
+
+
+class TeacherAssignmentSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
     class Meta:
         model = Teacher_assignment
         fields = '__all__'
