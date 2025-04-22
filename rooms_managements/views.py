@@ -11,6 +11,7 @@ from users.models import Student
 from rest_framework.views import APIView
 from managements.models import Session
 from django.utils.timezone import localtime, localdate
+from .filters import SeatingFilter, AttendanceFilter, DeviceFilter
 
 
 class SeatingViewSet(viewsets.ModelViewSet):
@@ -18,7 +19,7 @@ class SeatingViewSet(viewsets.ModelViewSet):
     serializer_class = SeatingSerializer
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['room', 'row', 'column']
+    filterset_class = SeatingFilter
     ordering_fields = '__all__'
 
     # Action để hoán đổi chỗ ngồi của 2 học sinh
@@ -72,7 +73,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     authention_classes = [AllowAny]
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['student', 'session', 'status']
+    filterset_class = AttendanceFilter
     ordering_fields = '__all__'
 
 
@@ -82,7 +83,7 @@ class DeviceViewSet(viewsets.ModelViewSet):
     authention_classes = [AllowAny]
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['room']
+    filterset_class = DeviceFilter
     ordering_fields = '__all__'
 
 class DeviceAttendanceAPIView(APIView):

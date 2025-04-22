@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-# Mới pull 
 from pathlib import Path
 from datetime import timedelta
 import os
@@ -21,25 +20,30 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Khởi tạo môi trường
 env = environ.Env()
 
-# Đọc file .env.dev
-environ.Env.read_env('.env.prod')
+# Đọc file .env
+env_file = os.path.join(BASE_DIR, '.env')
+if os.path.exists(env_file):
+    environ.Env.read_env(env_file)
+else:
+    print("Warning: .env file not found. Using default settings.")
 
-# Cấu hình các giá trị từ .env.dev
-SECRET_KEY = env('SECRET_KEY')
-DEBUG = env('DEBUG')
-#--------------------------------------
+# Cấu hình các giá trị từ .env
+SECRET_KEY = env('SECRET_KEY', default='django-insecure-jws0d7!db@mj42q-*n7cqn@^+guao$@rgf3o_@@al5ailinfdr')
+DEBUG = True  # Luôn để True cho dễ debug
+ALLOWED_HOSTS = ['*']  # Cho phép tất cả các host
 
+# Cấu hình bảo mật cơ bản
+SECURE_SSL_REDIRECT = env('SECURE_SSL_REDIRECT', default=False)  # Chuyển hướng HTTP sang HTTPS
+SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', default=False)  # Cookie chỉ được gửi qua HTTPS
+CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', default=False)  # CSRF cookie chỉ được gửi qua HTTPS
+SECURE_BROWSER_XSS_FILTER = True  # Bật XSS filter
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Ngăn chặn MIME type sniffing
+X_FRAME_OPTIONS = 'DENY'  # Ngăn chặn clickjacking
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-#SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-jws0d7!db@mj42q-*n7cqn@^+guao$@rgf3o_@@al5ailinfdr'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']
+# Cấu hình CORS
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = env('CORS_ALLOWED_ORIGINS', default=['http://localhost:3000', 'http://127.0.0.1:3000'])
 
 # Application definition
 
@@ -194,6 +198,4 @@ SIMPLE_JWT = {
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
-
-
 CORS_ALLOW_ALL_ORIGINS = True
