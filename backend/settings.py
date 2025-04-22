@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
 
 # Đọc file .env.dev
-environ.Env.read_env('.env.dev')
+environ.Env.read_env('.env.prod')
 
 # Cấu hình các giá trị từ .env.dev
 SECRET_KEY = env('SECRET_KEY')

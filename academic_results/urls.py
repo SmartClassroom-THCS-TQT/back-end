@@ -6,7 +6,6 @@ router = DefaultRouter()
 router.register(r'grades', GradeViewSet, basename='grade')
 router.register(r'grade-types', GradeTypeViewSet, basename='grade-type')
 
-urlpatterns = [
-    path('', include(router.urls)),
-    path('grades/distribution/', GradeDistributionAPIView.as_view(), name='grade-distribution'),
+urlpatterns = router.urls + [
+    path('grades_distribution/', GradeDistributionAPIView.as_view(), name='grade-distribution'),
 ]
