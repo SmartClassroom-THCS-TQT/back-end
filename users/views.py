@@ -20,6 +20,7 @@ from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
+from django.contrib.auth.models import Group
 
 # API lấy token CSRF
 class CSRFTokenView(APIView):
@@ -82,7 +83,6 @@ class RegisterView(APIView):
         if user_data.get('usrename') and Account.objects.filter(username=user_data['username']).exists():
             existing_fields["already_exists_username"] = [user_data['username']]
         
-        
         if existing_fields:
             return Response(existing_fields, status=status.HTTP_400_BAD_REQUEST)
         
@@ -97,6 +97,13 @@ class RegisterView(APIView):
             is_superuser=(False),
             date_joined=timezone.now()
         )
+
+        # Thêm user vào group tương ứng với role
+        try:
+            group = Group.objects.get(name=role)
+            user.groups.add(group)
+        except Group.DoesNotExist:
+            pass
         
         # Chọn serializer phù hợp theo role
         role_serializers = {

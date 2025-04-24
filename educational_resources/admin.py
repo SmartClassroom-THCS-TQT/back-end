@@ -1,48 +1,66 @@
 from django.contrib import admin
-from .models import Document, DocumentType, Tag
+from django.utils.html import format_html
+from .models import DocumentType, Document, LessonPlan
 
 
 @admin.register(DocumentType)
 class DocumentTypeAdmin(admin.ModelAdmin):
     list_display = ('name', 'description')
-    search_fields = ('name',)
+    search_fields = ('name', 'description')
+    list_per_page = 20
     ordering = ('name',)
 
 
-@admin.register(Tag)
-class TagAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name',)
-    ordering = ('name',)
+class BaseDocumentAdmin(admin.ModelAdmin):
+    list_display = ('title', 'uploaded_by', 'date_uploaded', 'access_type', 'is_active', 'archived')
+    list_filter = ('access_type', 'is_active', 'archived', 'date_uploaded')
+    search_fields = ('title', 'description', 'uploaded_by__username')
+    filter_horizontal = ('rooms', 'subjects', 'allowed_groups', 'allowed_users')
+    readonly_fields = ('date_uploaded', 'uploaded_by')
+    list_per_page = 20
+    ordering = ('-date_uploaded',)
+    date_hierarchy = 'date_uploaded'
+
+    def save_model(self, request, obj, form, change):
+        if not change:  # If creating new
+            obj.uploaded_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Document)
-class DocumentAdmin(admin.ModelAdmin):
-    list_display = ('title', 'document_type', 'uploaded_by', 'date_uploaded', 'access_type', 'is_active', 'archived')
-    list_filter = ('access_type', 'document_type', 'is_active', 'archived', 'date_uploaded')
-    search_fields = ('title', 'description', 'uploaded_by__user__full_name')
-    filter_horizontal = ('rooms', 'subjects', 'allowed_groups', 'allowed_users', 'tags')
-    autocomplete_fields = ('document_type', 'uploaded_by')
-    readonly_fields = ('date_uploaded', 'file_extension_display')
+class DocumentAdmin(BaseDocumentAdmin):
+    list_display = BaseDocumentAdmin.list_display + ('document_type',)
+    list_filter = BaseDocumentAdmin.list_filter + ('document_type',)
+    search_fields = BaseDocumentAdmin.search_fields + ('document_type__name',)
+    ordering = BaseDocumentAdmin.ordering
+
+
+@admin.register(LessonPlan)
+class LessonPlanAdmin(BaseDocumentAdmin):
+    list_display = BaseDocumentAdmin.list_display + ('status', 'reviewed_by', 'review_date', 'review_comment')
+    list_filter = BaseDocumentAdmin.list_filter + ('status', 'reviewed_by', 'review_date')
+    search_fields = BaseDocumentAdmin.search_fields + ('review_comment',)
+    readonly_fields = BaseDocumentAdmin.readonly_fields + ('reviewed_by', 'review_date')
+    ordering = BaseDocumentAdmin.ordering
     fieldsets = (
         (None, {
-            'fields': ('title', 'document_type', 'description', 'file', 'file_extension_display')
-        }),
-        ('Metadata & Ownership', {
-            'fields': ('uploaded_by', 'date_uploaded')
-        }),
-        ('Related Info', {
-            'fields': ('rooms', 'subjects', 'tags')
+            'fields': ('title', 'file', 'description', 'status')
         }),
         ('Access Control', {
-            'fields': ('access_type', 'allowed_groups', 'allowed_users', 'is_active', 'archived')
+            'fields': ('access_type', 'allowed_groups', 'allowed_users', 'rooms', 'subjects')
         }),
+        ('Review Information', {
+            'fields': ('reviewed_by', 'review_date', 'review_comment')
+        }),
+        ('Status', {
+            'fields': ('is_active', 'archived')
+        })
     )
 
-    def file_extension_display(self, obj):
-        return obj.file_extension
-    file_extension_display.short_description = 'File Extension'
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.select_related('document_type', 'uploaded_by').prefetch_related('rooms', 'subjects', 'tags')
+    def save_model(self, request, obj, form, change):
+        if not change:  # If creating new
+            obj.uploaded_by = request.user
+        else:  # If updating
+            if 'status' in form.changed_data or 'review_comment' in form.changed_data:
+                obj.reviewed_by = request.user
+        super().save_model(request, obj, form, change)

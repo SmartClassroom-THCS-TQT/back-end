@@ -48,7 +48,18 @@ if [ $? -eq 0 ]; then
         echo "Successfully switched to $ENV_TYPE environment"
         echo "File content:"
         cat "$TARGET_FILE"
-        exit 0
+        
+        # Restart nginx
+        echo "Restarting nginx..."
+        sudo systemctl restart nginx
+        
+        if [ $? -eq 0 ]; then
+            echo "Nginx restarted successfully"
+            exit 0
+        else
+            echo "Error: Failed to restart nginx"
+            exit 1
+        fi
     else
         echo "Error: Target file was not created or is empty"
         exit 1
