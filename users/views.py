@@ -132,7 +132,8 @@ class RegisterView(APIView):
 
 
 class ChangePasswordView(APIView):
-    permission_classes = [AllowAny]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         user = request.user
