@@ -7,6 +7,7 @@ class GradeFilter(django_filters.FilterSet):
     student_name = django_filters.CharFilter(field_name='student__full_name', lookup_expr='icontains')
     subject_code = django_filters.CharFilter(field_name='subject__code', lookup_expr='exact')
     semester = django_filters.NumberFilter(field_name='semester__code', lookup_expr='exact')
+    room_code = django_filters.CharFilter(field_name='room__code', lookup_expr='exact')
     grade_type = django_filters.CharFilter(field_name='grade_type__name', lookup_expr='icontains')
     score_min = django_filters.NumberFilter(field_name='score', lookup_expr='gte')
     score_max = django_filters.NumberFilter(field_name='score', lookup_expr='lte')
