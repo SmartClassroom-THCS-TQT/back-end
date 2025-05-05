@@ -79,7 +79,8 @@ class SessionViewSet(viewsets.ModelViewSet):
 class TeacherAssignmentViewSet(viewsets.ModelViewSet):
     queryset = Teacher_assignment.objects.all()
     def get_serializer_class(self):
-        if self.action in ['GET']:
+        # if self.action in ['GET']:
+        if self.action in ['list', 'retrieve']:
             return TeacherAssignmentREADSerializer
         return TeacherAssignmentSerializer
     permission_classes = [AllowAny]
