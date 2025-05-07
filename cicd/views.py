@@ -5,7 +5,7 @@ from django.conf import settings
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.contrib.auth import get_user_model
 from .models import DeploymentLog
 from .serializers import (
@@ -16,7 +16,7 @@ from .serializers import (
 )
 
 class DeploymentViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def _create_log(self, action, status, message, user):
         return DeploymentLog.objects.create(
@@ -41,6 +41,12 @@ class DeploymentViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'])
     def deploy(self, request):
+        if not request.user.is_superuser:
+            return Response(
+                {"detail": "Only superusers can perform this action."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         serializer = DeploySerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -89,6 +95,12 @@ class DeploymentViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'])
     def switch_env(self, request):
+        if not request.user.is_superuser:
+            return Response(
+                {"detail": "Only superusers can perform this action."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         serializer = SwitchEnvSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -113,6 +125,12 @@ class DeploymentViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'])
     def restart(self, request):
+        if not request.user.is_superuser:
+            return Response(
+                {"detail": "Only superusers can perform this action."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         serializer = RestartSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -143,6 +161,12 @@ class DeploymentViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def status(self, request):
+        if not request.user.is_superuser:
+            return Response(
+                {"detail": "Only superusers can perform this action."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         # Get git version
         success, git_version = self._run_command('git rev-parse HEAD')
         if not success:
