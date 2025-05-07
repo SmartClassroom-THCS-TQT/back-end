@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'educational_resources',
     'academic_results',
     'django_filters',
+    'cicd',
 ]
 
 MIDDLEWARE = [
@@ -199,3 +200,4 @@ SIMPLE_JWT = {
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 CORS_ALLOW_ALL_ORIGINS = True
+
