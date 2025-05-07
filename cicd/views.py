@@ -143,44 +143,34 @@ class DeploymentViewSet(viewsets.ViewSet):
         branch = serializer.validated_data['branch']
         log = self._create_log('deploy', 'in_progress', f'Starting deployment from branch {branch}', request.user)
 
-        # Pull latest code
-        success, output = self._run_command(f'git pull origin {branch}')
-        if not success:
-            log.status = 'failed'
-            log.message = f'Failed to pull code: {output}'
+        try:
+            # Chạy script deploy-backend.sh
+            success, output = self._run_command('bash /home/minhtien/back-end/deploy-backend.sh')
+            
+            if not success:
+                log.status = 'failed'
+                log.message = f'Deployment failed: {output}'
+                log.save()
+                return Response({'error': output}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            log.status = 'success'
+            log.message = 'Deployment completed successfully'
+            log.completed_at = datetime.now()
             log.save()
-            return Response({'error': output}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Install requirements
-        success, output = self._run_command('pip install -r requirements.txt')
-        if not success:
+            return Response({
+                'message': 'Deployment completed successfully',
+                'details': output
+            })
+
+        except Exception as e:
             log.status = 'failed'
-            log.message = f'Failed to install requirements: {output}'
+            log.message = f'Deployment failed with error: {str(e)}'
             log.save()
-            return Response({'error': output}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        # Run migrations
-        success, output = self._run_command('python manage.py migrate')
-        if not success:
-            log.status = 'failed'
-            log.message = f'Failed to run migrations: {output}'
-            log.save()
-            return Response({'error': output}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        # Restart services
-        success, output = self._run_command('sudo systemctl restart gunicorn')
-        if not success:
-            log.status = 'failed'
-            log.message = f'Failed to restart gunicorn: {output}'
-            log.save()
-            return Response({'error': output}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        log.status = 'success'
-        log.message = 'Deployment completed successfully'
-        log.completed_at = datetime.now()
-        log.save()
-
-        return Response({'message': 'Deployment completed successfully'})
+            return Response(
+                {'error': f'Deployment failed: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=['post'])
     def switch_env(self, request):
