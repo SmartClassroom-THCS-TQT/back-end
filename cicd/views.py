@@ -70,7 +70,15 @@ class DeploymentViewSet(viewsets.ViewSet):
         
         # Get version from git tags
         success, version = self._run_command('git describe --tags --abbrev=0')
-        info['version'] = version.strip() if success else 'Unknown'
+        if not success:
+            # Try to get version from VERSION file
+            version_file = os.path.join(settings.BASE_DIR, 'VERSION')
+            if os.path.exists(version_file):
+                with open(version_file, 'r') as f:
+                    version = f.read().strip()
+            else:
+                version = 'Unknown'
+        info['version'] = version.strip() if version != 'Unknown' else version
         
         return info
 
