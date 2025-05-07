@@ -45,6 +45,81 @@ class DeploymentViewSet(viewsets.ViewSet):
         except subprocess.CalledProcessError as e:
             return False, str(e)
 
+    def _get_git_info(self):
+        info = {}
+        
+        # Get commit hash
+        success, commit_hash = self._run_command('git rev-parse HEAD')
+        info['commit_hash'] = commit_hash.strip() if success else 'Unknown'
+        
+        # Get commit message
+        success, commit_message = self._run_command('git log -1 --pretty=%B')
+        info['commit_message'] = commit_message.strip() if success else 'Unknown'
+        
+        # Get commit date
+        success, commit_date = self._run_command('git log -1 --pretty=%cd')
+        info['commit_date'] = commit_date.strip() if success else 'Unknown'
+        
+        # Get author
+        success, author = self._run_command('git log -1 --pretty=%an')
+        info['author'] = author.strip() if success else 'Unknown'
+        
+        # Get branch
+        success, branch = self._run_command('git rev-parse --abbrev-ref HEAD')
+        info['branch'] = branch.strip() if success else 'Unknown'
+        
+        # Get version from git tags
+        success, version = self._run_command('git describe --tags --abbrev=0')
+        info['version'] = version.strip() if success else 'Unknown'
+        
+        return info
+
+    def _get_service_status(self):
+        services = {}
+        
+        # Get nginx status
+        success, nginx_status = self._run_command('systemctl is-active nginx')
+        services['nginx'] = {
+            'status': nginx_status.strip() if success else 'Unknown',
+            'uptime': self._get_service_uptime('nginx'),
+            'version': self._get_service_version('nginx')
+        }
+        
+        # Get gunicorn status
+        success, gunicorn_status = self._run_command('systemctl is-active gunicorn')
+        services['gunicorn'] = {
+            'status': gunicorn_status.strip() if success else 'Unknown',
+            'uptime': self._get_service_uptime('gunicorn'),
+            'version': self._get_service_version('gunicorn')
+        }
+        
+        return services
+
+    def _get_service_uptime(self, service):
+        success, uptime = self._run_command(f'systemctl show {service} -p ActiveEnterTimestamp')
+        if success:
+            try:
+                timestamp = uptime.split('=')[1].strip()
+                return timestamp
+            except:
+                return 'Unknown'
+        return 'Unknown'
+
+    def _get_service_version(self, service):
+        if service == 'nginx':
+            success, version = self._run_command('nginx -v')
+        elif service == 'gunicorn':
+            success, version = self._run_command('gunicorn --version')
+        else:
+            return 'Unknown'
+        
+        if success:
+            try:
+                return version.strip()
+            except:
+                return 'Unknown'
+        return 'Unknown'
+
     @action(detail=False, methods=['post'])
     def deploy(self, request):
         if not request.user.is_superuser:
@@ -167,24 +242,46 @@ class DeploymentViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def status(self, request):
-        # Get git version
-        success, git_version = self._run_command('git rev-parse HEAD')
-        if not success:
-            git_version = 'Unknown'
-
+        # Get git information
+        git_info = self._get_git_info()
+        
         # Get service status
-        success, nginx_status = self._run_command('systemctl is-active nginx')
-        success, gunicorn_status = self._run_command('systemctl is-active gunicorn')
-
+        services = self._get_service_status()
+        
         # Get latest deployment
         latest_deployment = DeploymentLog.objects.order_by('-created_at').first()
-        deployment_status = DeploymentLogSerializer(latest_deployment).data if latest_deployment else None
+        deployment_info = None
+        if latest_deployment:
+            deployment_info = {
+                'action': latest_deployment.action,
+                'status': latest_deployment.status,
+                'message': latest_deployment.message,
+                'created_at': latest_deployment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'completed_at': latest_deployment.completed_at.strftime('%Y-%m-%d %H:%M:%S') if latest_deployment.completed_at else None,
+                'created_by': latest_deployment.created_by.username if latest_deployment.created_by else None
+            }
 
         return Response({
-            'git_version': git_version,
-            'services': {
-                'nginx': nginx_status.strip(),
-                'gunicorn': gunicorn_status.strip()
+            'application': {
+                'name': 'Smart Classroom Backend',
+                'version': git_info['version'],
+                'environment': os.getenv('DJANGO_ENV', 'development'),
+                'last_updated': git_info['commit_date']
             },
-            'latest_deployment': deployment_status
+            'git': {
+                'branch': git_info['branch'],
+                'commit': {
+                    'hash': git_info['commit_hash'],
+                    'message': git_info['commit_message'],
+                    'author': git_info['author'],
+                    'date': git_info['commit_date']
+                }
+            },
+            'services': services,
+            'latest_deployment': deployment_info,
+            'server': {
+                'hostname': os.uname().nodename if hasattr(os, 'uname') else 'Unknown',
+                'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'timezone': settings.TIME_ZONE
+            }
         }) 
