@@ -1,5 +1,4 @@
-.env.dev
-,env.prod
+
 docker-compose.yml
 dockerfile
 media/
