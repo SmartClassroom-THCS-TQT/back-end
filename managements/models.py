@@ -115,8 +115,8 @@ class Session(models.Model):
     time_slot = models.ForeignKey(Time_slot, on_delete=models.CASCADE)  # Session time
 
     teacher = models.ForeignKey('users.Teacher', on_delete=models.CASCADE,related_name='sessions', null=True , blank=True)  # Teacher teaching the lesson
-    lesson_number = models.IntegerField()  # Lesson number
-    lesson_name = models.CharField(max_length=255)
+    lesson_number = models.IntegerField(null=True, blank=True)  # Lesson number
+    lesson_name = models.CharField(max_length=255, null=True, blank=True)
     detail = models.TextField(blank=True, null=True)  
     document = models.FileField(upload_to='lesson-documents/', blank=True, null=True)  # Document of the lesson
     comment = models.TextField(blank=True, null=True)  # Optional comment
