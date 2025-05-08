@@ -4,10 +4,11 @@ from .models import *
 class SessionFilter(filters.FilterSet):
     start_date = filters.DateFilter(field_name='day', lookup_expr='gte')
     end_date = filters.DateFilter(field_name='day', lookup_expr='lte')
-    time_slot_code = filters.NumberFilter(method='filter_time_slot_code')
-
-    def filter_time_slot_code(self, queryset, name, value):
-        return queryset.filter(time_slot__code=value)
+    time_slot_code = filters.ModelChoiceFilter(
+        queryset=Time_slot.objects.all(),
+        field_name='time_slot',
+        to_field_name='code'
+    )
 
     class Meta:
         model = Session
