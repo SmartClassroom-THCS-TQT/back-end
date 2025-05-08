@@ -4,6 +4,7 @@ from .models import *
 class SessionFilter(filters.FilterSet):
     start_date = filters.DateFilter(field_name='day', lookup_expr='gte')
     end_date = filters.DateFilter(field_name='day', lookup_expr='lte')
+    time_slot_code = filters.NumberFilter(field_name='time_slot__code')
 
     class Meta:
         model = Session
@@ -12,7 +13,6 @@ class SessionFilter(filters.FilterSet):
             'room_id': ['exact'],
             'teacher': ['exact'],
             'subject_code': ['exact'],
-            'time_slot__code': ['exact'],
             'day': ['exact'],  # vẫn giữ nếu cần lọc đúng 1 ngày
         }
 
